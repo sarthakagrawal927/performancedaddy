@@ -1,0 +1,9 @@
+.build/
+.swiftpm/
+.DS_Store
+DerivedData/
+dist/
+.env*
+*.log
+# Machine-local diagnostic captures are not product source.
+artifacts/

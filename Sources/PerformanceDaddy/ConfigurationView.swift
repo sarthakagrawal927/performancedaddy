@@ -1,0 +1,144 @@
+import AppKit
+import PerformanceCore
+import SwiftUI
+
+struct ConfigurationView: View {
+    @ObservedObject var live: LiveViewModel
+    @State private var scan: ConfigurationScan?
+    @State private var scanning = false
+    @State private var search = ""
+    @State private var selection: String?
+    @State private var sort = SortKey.path
+    @State private var ascending = true
+    @State private var processEvidenceDate: Date?
+    private enum SortKey { case path, owner, status }
+
+    private var rows: [ConfigurationFile] {
+        (scan?.files ?? []).filter {
+            search.isEmpty || "\($0.path) \($0.owner) \($0.scope) \($0.status)".localizedCaseInsensitiveContains(search)
+        }.sorted {
+            let a = sort == .path ? $0.path : sort == .owner ? $0.owner : $0.status
+            let b = sort == .path ? $1.path : sort == .owner ? $1.owner : $1.status
+            if a == b { return $0.path < $1.path }
+            return ascending ? a < b : a > b
+        }
+    }
+    private var selected: ConfigurationFile? { rows.first { $0.id == selection } }
+
+    var body: some View {
+        GeometryReader { geometry in
+        VStack(alignment: .leading, spacing: 18) {
+            HStack(alignment: .top) {
+                VStack(alignment: .leading, spacing: 6) {
+                    Text("Configuration").font(.largeTitle.weight(.semibold)).accessibilityAddTraits(.isHeader)
+                    Text("Find the settings around your local tools and observed projects.")
+                        .foregroundStyle(PerformanceTheme.secondaryInk)
+                }
+                DaddyArtwork(topic: 5).frame(width: 72, height: 72)
+                Spacer()
+                Button(scanning ? "Scanning…" : "Refresh") { Task { await refresh() } }
+                    .disabled(scanning || live.snapshot == nil)
+            }
+            VStack(alignment: .leading, spacing: 6) {
+                Text("Metadata only. Nothing edited or deleted.").font(.headline).foregroundStyle(PerformanceTheme.mintInk)
+                Text("Known shell and agent paths, plus known config filenames in observed user working directories. System/app-data directories are excluded. No file contents are read. Presence and age do not prove use or junk.")
+                    .font(.callout).foregroundStyle(PerformanceTheme.secondaryInk)
+                    .fixedSize(horizontal: false, vertical: true)
+            }.padding(.vertical, 12)
+                .overlay(alignment: .top) { Rectangle().fill(PerformanceTheme.divider).frame(height: 1) }
+                .overlay(alignment: .bottom) { Rectangle().fill(PerformanceTheme.divider).frame(height: 1) }
+            HStack {
+                Image(systemName: "magnifyingglass").foregroundStyle(PerformanceTheme.secondaryInk)
+                TextField("Search file, path, tool or status", text: $search).textFieldStyle(.plain)
+                    .accessibilityLabel("Search configuration files")
+                if !search.isEmpty {
+                    Button { search = "" } label: { Image(systemName: "xmark.circle.fill") }
+                        .buttonStyle(.plain).accessibilityLabel("Clear configuration search")
+                }
+            }.padding(10).overlay(RoundedRectangle(cornerRadius: 7).stroke(PerformanceTheme.mintInk.opacity(0.35)))
+            VStack(spacing: 0) {
+                HStack(spacing: 12) {
+                    sortHeader("FILE", .path).frame(maxWidth: .infinity, alignment: .leading)
+                    sortHeader("TOOL", .owner).frame(width: 110, alignment: .leading)
+                    sortHeader("STATUS", .status).frame(width: 180, alignment: .leading)
+                }.padding(.horizontal, 4).padding(.bottom, 8)
+                Rectangle().fill(PerformanceTheme.divider).frame(height: 1)
+                List(rows, selection: $selection) { file in
+                    HStack(spacing: 12) {
+                        VStack(alignment: .leading, spacing: 3) {
+                            Text(file.name).fontWeight(.medium).lineLimit(1)
+                            Text(displayPath(file.path)).font(.caption).foregroundStyle(PerformanceTheme.secondaryInk).lineLimit(1)
+                        }.frame(maxWidth: .infinity, alignment: .leading).help(file.path)
+                        Text(file.owner).frame(width: 110, alignment: .leading).lineLimit(1)
+                        Text(file.status).font(.caption).foregroundStyle(file.status == "Present" ? PerformanceTheme.mintInk : PerformanceTheme.secondaryInk)
+                            .frame(width: 180, alignment: .leading)
+                    }.padding(.vertical, 6).tag(file.id)
+                        .listRowInsets(EdgeInsets(top: 4, leading: 4, bottom: 4, trailing: 4))
+                        .listRowBackground(selection == file.id ? PerformanceTheme.mintInk.opacity(0.1) : Color.black)
+                        .accessibilityElement(children: .combine)
+                }.listStyle(.plain).scrollContentBackground(.hidden)
+            }
+            .frame(minHeight: 100, maxHeight: .infinity)
+            .layoutPriority(-1)
+            .overlay {
+                if scan == nil { ProgressView(scanning ? "Checking known configuration paths…" : "Waiting for local process evidence…") }
+                else if scan != nil && rows.isEmpty {
+                    ContentUnavailableView(search.isEmpty ? "No files found in checked paths" : "No matching files",
+                        systemImage: "doc.text.magnifyingglass",
+                        description: Text(search.isEmpty ? "This is a bounded inventory, not a whole-disk scan." : "Try another file name or tool."))
+                }
+            }
+            if let selected {
+                VStack(alignment: .leading, spacing: 6) {
+                    Text(selected.path).textSelection(.enabled).font(.caption).lineLimit(2)
+                    Text("\(selected.scope) · \(selected.bytes.map(LiveViewModel.bytes) ?? "Size unavailable") · Modified \(selected.modified.map { $0.formatted(date: .abbreviated, time: .shortened) } ?? "unavailable")")
+                        .font(.caption).foregroundStyle(PerformanceTheme.secondaryInk)
+                    HStack {
+                        Text(selected.nearbyProcesses > 0 ? "\(selected.nearbyProcesses) processes observed in this directory. Loading this file is not verified." : "Known tool location. Loading this file is not verified.")
+                            .font(.caption).foregroundStyle(PerformanceTheme.secondaryInk)
+                        Spacer()
+                        Button("Reveal in Finder") { NSWorkspace.shared.activateFileViewerSelecting([URL(fileURLWithPath: selected.path)]) }
+                            .disabled(selected.status != "Present" && selected.status != "Symlink · not followed")
+                    }
+                }
+            }
+            if let scan {
+                VStack(alignment: .leading, spacing: 3) {
+                    Text("\(rows.count) shown · \(scan.checkedPaths) paths checked · \(scan.projectDirectories) directories · \(scan.omittedDirectories) beyond limit")
+                    Text("Metadata: \(scan.sampledAt.formatted(date: .omitted, time: .standard)) · Process evidence: \(processEvidenceDate?.formatted(date: .omitted, time: .standard) ?? "unavailable")")
+                }.font(.caption).foregroundStyle(PerformanceTheme.secondaryInk)
+            }
+        }.padding(24).frame(width: geometry.size.width, height: geometry.size.height, alignment: .topLeading)
+            .background(PerformanceTheme.fog)
+            .task(id: live.snapshot != nil) { if scan == nil && live.snapshot != nil { await refresh() } }
+        }
+    }
+
+    private func sortHeader(_ title: String, _ key: SortKey) -> some View {
+        Button {
+            if sort == key { ascending.toggle() } else { sort = key; ascending = true }
+        } label: {
+            HStack(spacing: 4) {
+                Text(title)
+                if sort == key { Image(systemName: ascending ? "chevron.up" : "chevron.down") }
+            }.font(.system(size: 10, weight: .semibold, design: .monospaced))
+                .frame(maxWidth: .infinity, minHeight: 28, alignment: .leading).contentShape(Rectangle())
+        }.buttonStyle(.plain).foregroundStyle(sort == key ? PerformanceTheme.mintInk : PerformanceTheme.secondaryInk)
+            .accessibilityLabel("Sort configurations by \(title.lowercased())")
+            .accessibilityValue(sort == key ? (ascending ? "Ascending" : "Descending") : "Not sorted")
+    }
+    private func displayPath(_ path: String) -> String {
+        let home = FileManager.default.homeDirectoryForCurrentUser.path
+        return path.hasPrefix(home + "/") ? "~" + path.dropFirst(home.count) : path
+    }
+    private func refresh() async {
+        guard !scanning, let captured = live.snapshot else { return }
+        scanning = true
+        let processes = captured.processes
+        processEvidenceDate = captured.date
+        let home = FileManager.default.homeDirectoryForCurrentUser.path
+        scan = await Task.detached(priority: .utility) { ConfigurationInventory.scan(home: home, processes: processes) }.value
+        selection = nil
+        scanning = false
+    }
+}

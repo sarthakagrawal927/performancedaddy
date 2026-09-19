@@ -1,0 +1,242 @@
+{
+  "$schema": "fleet.design-review.v1",
+  "version": 1,
+  "rcaEveryRecordingReview": {
+    "date": "2026-09-19",
+    "mode": "preserve",
+    "contract": "Every completed local diagnostic recording exposes domain assessments, measured contributors, coverage, uncertainty and a next discriminating check",
+    "direction": "Owner-approved native Daddy styling and existing NOW WHY NEXT bands",
+    "evidence": "Live recording produced five domain assessments and three named contributors; final dated-history checks recorded in conversation",
+    "review": "Two independent read-only assessments; historical-live wording, CPU threshold disclosure, missing-contributor branch, domain labels and inter-recording rate reset corrected",
+    "checks": "Build and 88 tests pass",
+    "limits": "Root cause is not guaranteed; unavailable domains explicit. Last ten reports in memory only. Legacy base design gate still fails; full VoiceOver and minimum-window not qualified."
+  },
+  "terminalPortsReview": {
+    "date": "2026-09-19",
+    "mode": "preserve",
+    "direction": "Owner-supplied exact StorageDaddy native black/mint system",
+    "contract": "Explain an explicitly authorized zsh startup experiment and make listener port numbers easy to find",
+    "evidence": "Native conversation before/after screenshots and AX: leading ports, inspector endpoints, terminal consent disabled by default, minimal baseline result, Escape",
+    "reviews": "Independent process_design_assessment and process_technical_assessment; prior P2 findings fixed and rechecked; no concrete remaining P0/P1",
+    "checks": "XcodeBuildMCP build and 79 tests pass",
+    "limits": "Only baseline run live; personal startup not executed. First prompt, repeated statistics and smallest-window/full VoiceOver unqualified. Swift detector unsupported. Legacy base gate still fails; no overall design qualification claim."
+  },
+  "polishIconReview": {
+    "date": "2026-09-19",
+    "mode": "preserve",
+    "ownerDecision": "Polish existing Daddy styling; remove in-app series label",
+    "evidence": "Native conversation screenshots and AX: help popover, Command-F and Clear search, major live pages, diagnostic setup/completion, new icon at row and sidebar sizes",
+    "critique": "Dual independent read-only assessments; 39/40 provisional source-only after duplicate-empty-state fix; no remaining concrete P0/P1/P2 in bounded scope",
+    "checks": "72 tests and build pass; plist and scripts validate; Swift detector unsupported",
+    "limits": "No all-crashes guarantee. Full VoiceOver, minimum-window and legacy base design gate remain unqualified. Unsigned development bundle lacks sealed resource envelope; code-only verification passes. No release signing."
+  },
+  "catalogIdentityExitReview": {
+    "date": "2026-09-19",
+    "mode": "preserve",
+    "direction": "Owner-approved exact Daddy black/mint system; no new composition",
+    "contract": "Explain unfamiliar local processes and independently show running-code identity, configured startup policy and confirmed exit evidence",
+    "critique": "Independent source-only 37/40 after four P2 fixes; no remaining concrete P0/P1/P2 in increment",
+    "technical": "Independent read-only review confirmed exec/UID evidence reset, serialized cancellable validation and conservative tri-state exit checks",
+    "checks": "XcodeBuildMCP build and 69 tests pass",
+    "evidence": "Final native conversation AX/screenshots: photo-analysis role search, separate Code identity and Startup headings, Apple photoanalysisd validation, developer Warp validation, collapsed detail disclosure; actual exit checks tested on disposable children only",
+    "remaining": "Whole-app overhead, minimum-window and full VoiceOver unqualified; legacy base design receipt still fails and is not represented as passed",
+    "ownerDecision": "Continue approved process-understanding scope; preserve exact StorageDaddy styling"
+  },
+  "processUnderstandingReview": {
+    "date": "2026-09-19",
+    "mode": "preserve",
+    "contract": "Help Mac users understand process duration, ownership hints, configured startup policies and observed returns without unsafe causal claims",
+    "direction": "Owner-approved Daddy black/mint flat list, clickable headers and evidence inspector; no grouped-view overhaul",
+    "critique": "Independent source health 36/40 provisional after fixes; no remaining P0/P1 in scope",
+    "technical": "Independent read-only review confirmed bounded lazy scan and pause-independent expiry fixes; Swift detector does not qualify native UI",
+    "evidence": "Native conversation screenshots and AX: duration sort reversal, persistent Running column with inspector, cfprefsd policy match/disclosure, empty history; startup check 105 ms with scan-limit disclosure",
+    "checks": "XcodeBuildMCP build and 58 tests pass, including owned-child stop-to-journal integration",
+    "remaining": "Minimum-window and full VoiceOver unverified. Existing legacy design receipt gate still fails; no overall design qualification claim",
+    "ownerDecision": "Approved bounded process understanding; preserve exact Daddy styling"
+  },
+  "processResourceHistoryReview": {
+    "date": "2026-09-19",
+    "mode": "preserve-approved-system",
+    "direction": "Existing StorageDaddy flat inspector sections and typography",
+    "critique": "Independent source-only 35/40 provisional; no P0/P1 identified",
+    "technicalReview": "Fixed omitted partial-sample thermal worsening and overstated growth wording; added header traits",
+    "evidence": "Root native UI verified real RSS history, physical footprint, cumulative disk counters and lower inspector scrolling; build and 50 tests passed",
+    "remaining": "Minimum-window, full VoiceOver, physical sleep/wake, whole-app overhead and legacy design receipt remain unqualified",
+    "ownerDecision": "preserve exact Daddy-series system"
+  },
+  "configurationReview": {
+    "date": "2026-09-19",
+    "mode": "preserve-approved-system",
+    "direction": "Owner supplied exact StorageDaddy patterns; applied unchanged to configuration inventory",
+    "contract": "Help Mac developers locate relevant known configuration metadata without reading contents or claiming a file is loaded or junk",
+    "critique": "Independent source review 36/40 after fixes; native root screenshots confirm bounded layout",
+    "technicalReview": "First-sample readiness fixed; no new findings after review; no-follow tests cover existing and broken targets",
+    "evidence": "Native conversation screenshots: nine real files, .zshrc metadata, sort reversal and search/detail hiding",
+    "remaining": "Minimum-window, full VoiceOver and legacy broader design-receipt qualification remain open",
+    "ownerDecision": "keep exact Daddy-series system"
+  },
+  "resourceEvidenceReview": {
+    "date": "2026-09-19",
+    "mode": "preserve",
+    "direction": "Owner-approved exact StorageDaddy Daddy-series styling",
+    "reviewers": ["thermal_design_review", "thermal_native_review"],
+    "critique": "34/40 provisional source assessment; native root inspection supplements source review",
+    "technicalReview": "Pause continuity finding fixed and re-reviewed. No remaining confirmed P0/P1 in this increment.",
+    "checks": "33 tests passed; Swift package build passed",
+    "evidence": "Native screenshots and AX in conversation: real VM values, swap rates, unavailable CPU allowances and fan coverage; scrollbar reaches lower content and Escape dismisses popover",
+    "detector": "Swift unsupported, empty detector output is not qualification",
+    "remaining": "Minimum-window, full VoiceOver, physical sleep/wake and release-overhead checks; no raw fan sensor implementation; legacy broader design gate remains unpassed"
+  },
+  "dailyWorkflowReview": {
+    "date": "2026-09-19",
+    "mode": "preserve",
+    "direction": "Owner-approved exact StorageDaddy Daddy-series styling",
+    "critique": "36/40, independent polish_design_review",
+    "technicalReview": "No material correctness/privacy regressions; two scope/overlap disclosures clarified",
+    "checks": "26 tests passed and native build passed",
+    "evidence": "Native header reversal, grouped Devin workloads, context-menu contents, export save-panel cancellation and Memory screenshot with observer metrics",
+    "remaining": "Minimum-window, full VoiceOver and release overhead qualification; broader design gate not claimed passed"
+  },
+  "daddySeriesReview": {
+    "date": "2026-09-19",
+    "mode": "overhaul",
+    "approval": "approved",
+    "selected": "owner-supplied-storagedaddy-exact",
+    "ownerDirection": "Please follow the exact styling and patterns from StorageDaddy. We will be calling it the Daddy series soon.",
+    "ownerFeedback": "it automatically looks much better",
+    "reference": "../storagedaddy/DESIGN.md and Sources/StorageDaddy/{ExplorerView,StorageButtonStyle,Workspaces,DoodleArt}.swift",
+    "scope": "Exact family style, original assets reused unchanged; local runtime capabilities remain separate from storage cleanup.",
+    "critique": "35/40, independent polish_design_review",
+    "audit": "15/20, independent polish_native_audit; no confirmed P0/P1, native coverage limits remain",
+    "evidence": "Native conversation screenshots of Processes and Agent sessions. AX verified Devin family, exact-target stop review and Cancel without stopping agents.",
+    "checks": "XcodeBuildMCP build passed; 18 tests passed",
+    "limitations": "Full VoiceOver and minimum-window acceptance pending; Swift unsupported by web detector. Earlier web-only receipt fields below are historical and do not qualify this native revision."
+  },
+  "refinementReview": {
+    "date": "2026-09-19",
+    "mode": "preserve",
+    "target": "LiveWorkloadsView.swift daily table refinement",
+    "scope": "Owner-requested clickable headers and StorageDaddy pattern reuse; no broad visual-system replacement.",
+    "reuse": "StorageDaddy native icon caching and readable location labels; source product unchanged.",
+    "assessments": ["/root/polish_design_review", "/root/polish_native_audit"],
+    "critiqueScore": "34/40",
+    "auditStatus": "provisional source-only; minimum-window risks identified, minimum raised to 980x800",
+    "evidence": "Native conversation screenshots: Processes and Ports at 1180x740; RAM header ascending/descending; final PID labels and Memory layout after relaunch.",
+    "checks": "XcodeBuildMCP build passed; 15 tests passed",
+    "detector": "Exit 0, empty results, but Swift unsupported: not accepted as native evidence.",
+    "remaining": "Minimum-width inspector, full VoiceOver, light appearance and stop-sheet acceptance not verified. Broader design gate remains open."
+  },
+  "project": "performancedaddy",
+  "target": "Native macOS diagnosis workspace",
+  "surfaceMode": "operate",
+  "mode": "overhaul",
+  "register": "product",
+  "context": {
+    "product": "PRODUCT.md",
+    "design": "DESIGN.md"
+  },
+  "direction": {
+    "references": [
+      "Apple Activity Monitor",
+      "Apple Instruments",
+      "EtreCheckPro"
+    ],
+    "probes": [
+      "artifacts/design/direction-c-calm-triage.png"
+    ],
+    "selected": "calm-triage",
+    "approval": "approved",
+    "before": "",
+    "library": {
+      "strategy": "apple-native",
+      "primary": "SwiftUI",
+      "sources": [
+        "https://support.apple.com/guide/activity-monitor/welcome/mac",
+        "https://developer.apple.com/documentation/xcode/analyzing-the-performance-of-your-metal-app",
+        "https://etrecheck.com/en/welcome.html"
+      ],
+      "runtime": "none",
+      "customReplacement": {
+        "used": false,
+        "authorization": "not-required",
+        "reason": ""
+      }
+    },
+    "contract": {
+      "purpose": "Explain why a Mac feels slow and provide one safe, evidence-backed next step.",
+      "purposeSource": "PRODUCT.md",
+      "canonicalPurpose": "PerformanceDaddy helps Mac users investigate slowdowns, understand active workloads, find regressions against known-good evidence and optimize repeatable workflows through bounded native measurement and comparable verification.",
+      "purposeAlignment": "partial",
+      "driftNote": "Calm Triage is the approved incident-investigation surface; Live, regression and workflow-lab surfaces require a future design selection.",
+      "audience": "Mac users, especially developers, who do not want to interpret raw system metrics.",
+      "job": "Turn a slowdown captured now into a trustworthy cause and safe next action.",
+      "thesis": "A calm plain-language verdict should lead; technical evidence should earn confidence through progressive disclosure.",
+      "system": "Cool fog canvas, deep ink type, coral active-load role, mint verified-healthy role, blue deliberate-action role, large verdict typography and three stacked narrative bands.",
+      "signature": "NOW, WHY and NEXT convert symptom to cause to action in one scan.",
+      "risk": "The deliberately simple surface may initially under-serve experts, so evidence expands without displacing the verdict."
+    }
+  },
+  "evidence": {
+    "screenshots": [
+      {
+        "width": 390,
+        "path": "artifacts/design/after-390.png"
+      },
+      {
+        "width": 768,
+        "path": "artifacts/design/after-768.png"
+      },
+      {
+        "width": 1440,
+        "path": "artifacts/design/after-1440.png"
+      }
+    ],
+    "projectCheck": {
+      "command": "XcodeBuildMCP swift_package_test and swift_package_build",
+      "status": "passed"
+    },
+    "critique": {
+      "score": 31,
+      "maximum": 40
+    },
+    "audit": {
+      "score": 10,
+      "maximum": 20
+    },
+    "unresolved": {
+      "p0": 0,
+      "p1": 1
+    },
+    "detector": {
+      "posture": "advisory",
+      "findings": [],
+      "note": "The web-oriented detector does not support Swift; native source and live AX review were used instead."
+    },
+    "comprehension": {
+      "status": "not-applicable",
+      "reviewer": "",
+      "answers": {
+        "product": "",
+        "audience": "",
+        "value": "",
+        "mechanism": "",
+        "proof": "",
+        "nextAction": ""
+      },
+      "purposeScore": {
+        "product": 0,
+        "audience": 0,
+        "value": 0,
+        "mechanism": 0,
+        "proof": 0,
+        "nextAction": 0,
+        "total": 0
+      },
+      "mismatches": []
+    }
+  },
+  "ownerFeedback": {
+    "decision": "keep",
+    "note": "The owner selected direction C, Calm Triage, on 2026-09-19."
+  }
+}

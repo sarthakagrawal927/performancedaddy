@@ -1,0 +1,159 @@
+import Foundation
+@testable import PerformanceCore
+@testable import PerformanceDaddy
+import XCTest
+
+@MainActor
+final class LiveViewModelTests: XCTestCase {
+    func testInvalidMemoryAndTimingEvidenceDoesNotTrapOrInventNumbers() {
+        let model = LiveViewModel()
+        let own = process(ProcessInfo.processInfo.processIdentifier, name: "PerformanceDaddy", cpu: 1)
+        for invalid in [Double.nan, .infinity, -.infinity, -1, 2] {
+            model.snapshot = snapshot([own], headroom: invalid, scanSeconds: .nan)
+            XCTAssertEqual(model.usedMemory, "—")
+            XCTAssertTrue(model.observerSummary.contains("scan unavailable"))
+        }
+        model.snapshot = snapshot([own], headroom: 1)
+        XCTAssertEqual(model.usedMemory, LiveViewModel.bytes(0))
+    }
+
+    func testOversizedFamilyMemoryDoesNotOverflow() {
+        func member(_ pid: Int32, parent: Int32) -> LiveProcess {
+            LiveProcess(id: .init(pid: pid, started: 10), parent: parent, uid: getuid(), name: "codex", executable: "/opt/bin/codex", directory: "", cpu: 1, memory: UInt64.max)
+        }
+        let model = LiveViewModel()
+        model.snapshot = snapshot([member(10, parent: 1), member(11, parent: 10)])
+        XCTAssertEqual(model.rows(for: .agents).count, 1)
+        XCTAssertEqual(model.rows(for: .agents).first?.memory, UInt64.max)
+    }
+
+    func testRepeatedSnapshotReplacementAndFilteringKeepsRowsCurrent() {
+        let model = LiveViewModel()
+        model.includeSystem = true
+        for cycle in 0..<200 {
+            let pid = Int32(1_000 + cycle)
+            model.snapshot = snapshot([process(pid, name: "codex", cpu: Double(cycle))])
+            model.search = "nothing-matches-👾"
+            XCTAssertTrue(model.rows(for: .workloads).isEmpty)
+            model.search = "codex"
+            for page in [LivePage.workloads, .agents, .memory] {
+                XCTAssertEqual(model.rows(for: page).map(\.id.pid), [pid])
+            }
+            XCTAssertTrue(model.rows(for: .ports).isEmpty)
+        }
+    }
+    func testCatalogRolesAreSearchableAndAppContextIsVisible() {
+        let service = LiveProcess(id: .init(pid: 900, started: 10), parent: 1, uid: getuid(), name: "coreaudiod", executable: "/usr/sbin/coreaudiod", directory: "/", cpu: 0, memory: 0)
+        let app = LiveProcess(id: .init(pid: 901, started: 10), parent: 1, uid: getuid(), name: "helper", executable: "/Applications/Example.app/Contents/MacOS/helper", directory: "/", cpu: 0, memory: 0)
+        let model = LiveViewModel()
+        model.snapshot = snapshot([service, app])
+        model.search = "audio"
+        XCTAssertEqual(model.rows(for: .workloads).map(\.id.pid), [900])
+        XCTAssertTrue(model.processSubtitle(service).contains("Audio"))
+        XCTAssertTrue(model.processSubtitle(app).contains("Example"))
+        let helper = LiveProcess(id: .init(pid: 902, started: 20), parent: 901, uid: getuid(), name: "worker", executable: "/opt/bin/worker", directory: "/", cpu: 0, memory: 0)
+        model.snapshot = snapshot([service, app, helper])
+        model.search = "Example.app"
+        XCTAssertEqual(model.rows(for: .workloads).map(\.id.pid), [901, 902])
+    }
+    func testReviewedOwnedChildStopReachesLifecycleJournal() async throws {
+        let child = Process()
+        child.executableURL = URL(fileURLWithPath: "/bin/sleep")
+        child.arguments = ["30"]
+        try child.run()
+        defer { if child.isRunning { child.terminate() } }
+        let model = LiveViewModel()
+        await model.refresh()
+        let observed = try XCTUnwrap(model.snapshot?.processes.first { $0.id.pid == child.processIdentifier })
+        model.prepare([observed])
+        XCTAssertEqual(model.review?.targets.count, 1)
+        await model.confirmStop(force: false)
+        XCTAssertEqual(model.outcomes.count, 1)
+        XCTAssertTrue(model.outcomes[0].signalSent)
+        XCTAssertNotNil(model.outcomes[0].signalDate)
+        XCTAssertTrue(model.lifecycle.events.contains { $0.text.contains("signal sent") })
+        XCTAssertTrue(model.lifecycle.events.contains { $0.text.contains("Exit confirmed") })
+        XCTAssertTrue(model.outcomeText(model.outcomes[0]).contains("Exit confirmed"))
+        XCTAssertFalse(model.lifecycle.events.contains { $0.text.contains("Matching executable") })
+    }
+
+    func testMissingSampleDoesNotConfirmExit() {
+        let model = LiveViewModel()
+        let target = process(999, name: "worker", cpu: 1)
+        let result = StopResult(process: target, message: "Stop signal sent; checking exit", signalSent: true)
+        model.snapshot = snapshot([])
+        XCTAssertTrue(model.outcomeText(result).contains("exit not confirmed"))
+        model.snapshot = snapshot([target])
+        XCTAssertTrue(model.outcomeText(result).contains("still observed"))
+    }
+
+    func testPauseResumeStartsFreshRateWindow() async throws {
+        let model = LiveViewModel()
+        await model.refresh()
+        try await Task.sleep(for: .milliseconds(150))
+        await model.refresh()
+        XCTAssertNotNil(model.snapshot?.system.memory?.rateIntervalSeconds)
+        model.paused = true
+        model.paused = false
+        await model.refresh()
+        XCTAssertNotNil(model.snapshot?.system.memory)
+        XCTAssertNil(model.snapshot?.system.memory?.rateIntervalSeconds)
+        XCTAssertNil(model.snapshot?.system.memory?.swapInBytesPerSecond)
+        XCTAssertNil(model.snapshot?.system.usedCPUCores)
+    }
+
+    func testCachedRowsInvalidateOnSearchSortAndSnapshot() {
+        let model = LiveViewModel()
+        model.includeSystem = true
+        model.snapshot = snapshot([process(10, name: "devin", cpu: 2), process(11, name: "codex", cpu: 8)])
+        XCTAssertEqual(model.agentCount, 2)
+        XCTAssertEqual(model.rows(for: .workloads).map(\.id.pid), [11, 10])
+        XCTAssertEqual(model.rows(for: .workloads).map(\.id.pid), [11, 10])
+        model.search = "Devin"
+        XCTAssertEqual(model.rows(for: .workloads).map(\.id.pid), [10])
+        model.search = ""
+        model.sortOrder = [KeyPathComparator(\LiveProcess.sortCPU)]
+        XCTAssertEqual(model.rows(for: .workloads).map(\.id.pid), [10, 11])
+        model.snapshot = snapshot([process(12, name: "claude", cpu: 1)])
+        XCTAssertEqual(model.agentCount, 1)
+        XCTAssertEqual(model.rows(for: .workloads).map(\.id.pid), [12])
+        XCTAssertEqual(model.rows(for: .agents).map(\.id.pid), [12])
+    }
+
+    func testFamilyAggregationAndReviewDoNotDuplicateTargets() {
+        let model = LiveViewModel()
+        model.includeSystem = true
+        let root = process(20, name: "devin", cpu: 1)
+        let helper = process(21, parent: 20, name: "devin", cpu: 2)
+        let child = process(22, parent: 21, name: "node", cpu: 4)
+        model.snapshot = snapshot([root, helper, child])
+        let rows = model.rows(for: .agents)
+        XCTAssertEqual(rows.count, 1)
+        XCTAssertEqual(rows.first?.cpu, 7)
+        XCTAssertEqual(rows.first?.memory, 3_072)
+        model.prepareFamilies([root, helper])
+        XCTAssertEqual(Set(model.review?.targets.map(\.id.pid) ?? []), [20, 21, 22])
+        XCTAssertEqual(model.review?.targets.count, 3)
+        XCTAssertFalse(model.performingAction)
+    }
+
+    func testReusedByteFormatterPreservesExistingOutput() {
+        for bytes: UInt64 in [0, 1, 1023, 1024, 1_048_576, 48_000_000_000, UInt64.max] {
+            XCTAssertEqual(LiveViewModel.bytes(bytes),
+                ByteCountFormatter.string(fromByteCount: Int64(clamping: bytes), countStyle: .memory))
+        }
+    }
+
+    private func process(_ pid: Int32, parent: Int32 = 1, name: String, cpu: Double) -> LiveProcess {
+        LiveProcess(id: .init(pid: pid, started: 10), parent: parent, uid: getuid(), name: name,
+                    executable: "/opt/bin/\(name)", directory: "/tmp", cpu: cpu, memory: 1_024)
+    }
+
+    private func snapshot(_ processes: [LiveProcess], headroom: Double = 0.5, scanSeconds: Double = 0.01) -> LiveSnapshot {
+        let date = Date(timeIntervalSince1970: 1_000)
+        return LiveSnapshot(date: date, processes: processes,
+            system: .init(timestamp: date, usedCPUCores: 1, memoryHeadroomRatio: headroom,
+                          swapUsedBytes: 0, diskFreeBytes: nil, thermal: .nominal, processes: []),
+            pressure: "Normal", compressed: nil, unavailableProcesses: 0, portsDate: date, scanSeconds: scanSeconds)
+    }
+}
