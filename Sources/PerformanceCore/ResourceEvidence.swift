@@ -40,6 +40,25 @@ struct SwapRateTracker {
     }
 }
 
+/// Disk capacity changes slowly relative to the live process sampler. Re-reading
+/// the "important usage" value invokes expensive system cache accounting.
+struct DiskCapacityCache {
+    private var previous: (date: Date, value: Int64?)?
+
+    mutating func value(at date: Date, maximumAge: TimeInterval = 60,
+                        read: () -> Int64?) -> Int64? {
+        if let previous {
+            let age = date.timeIntervalSince(previous.date)
+            if age.isFinite, age >= 0, age < maximumAge { return previous.value }
+        }
+        let value = read()
+        previous = (date, value)
+        return value
+    }
+
+    mutating func reset() { previous = nil }
+}
+
 struct MemoryEvidenceReader {
     private var rates = SwapRateTracker()
     private let origin = ContinuousClock.now

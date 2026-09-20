@@ -50,6 +50,20 @@ final class ResourceEvidenceTests: XCTestCase {
         XCTAssertEqual(PowerEvidence.percentage(100), 100)
     }
 
+    func testDiskCapacityCacheBoundsExpensiveReadsAndResetsAcrossGaps() {
+        var cache = DiskCapacityCache()
+        var reads = 0
+        func read() -> Int64? { reads += 1; return Int64(reads) }
+        let start = Date(timeIntervalSince1970: 1_000)
+        XCTAssertEqual(cache.value(at: start, read: read), 1)
+        XCTAssertEqual(cache.value(at: start.addingTimeInterval(59), read: read), 1)
+        XCTAssertEqual(reads, 1)
+        XCTAssertEqual(cache.value(at: start.addingTimeInterval(60), read: read), 2)
+        XCTAssertEqual(cache.value(at: start.addingTimeInterval(-1), read: read), 3)
+        cache.reset()
+        XCTAssertEqual(cache.value(at: start, read: read), 4)
+    }
+
     func testLiveNativeEvidenceDoesNotInventZeroOnFirstRate() async throws {
         let sampler = LiveSystemSampler()
         let sample = await sampler.sample(includeProcesses: false)

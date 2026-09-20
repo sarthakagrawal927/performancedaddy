@@ -16,11 +16,13 @@ public actor LiveSystemSampler: SystemSampling {
     private var previousProcessCounters: [Int32: ProcessCounter] = [:]
     private var processNames: [Int32: String] = [:]
     private var memoryReader = MemoryEvidenceReader()
+    private var diskCapacity = DiskCapacityCache()
 
     public init() {}
 
     public func resetMeasurementWindow() async {
         memoryReader = MemoryEvidenceReader()
+        diskCapacity.reset()
         previousCPUTicks = nil
         previousProcessCounters.removeAll()
     }
@@ -46,7 +48,7 @@ public actor LiveSystemSampler: SystemSampling {
             usedCPUCores: usedCPUCores,
             memoryHeadroomRatio: headroom,
             swapUsedBytes: readSwapUsed(),
-            diskFreeBytes: readDiskFree(),
+            diskFreeBytes: diskCapacity.value(at: now, read: readDiskFree),
             thermal: readThermalCondition(),
             processes: Array(processes.prefix(16)),
             samplerCPUCores: samplerCPU,
