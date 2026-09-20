@@ -25,11 +25,22 @@ if not match:
 subprocess.run(["codesign", "--verify", "--verbose=2", str(source)], check=True)
 subprocess.run(["xcrun", "stapler", "validate", str(source)], check=True)
 sums = args.release_directory / "SHA256SUMS"
-if sums.is_file() and hashlib.sha256(source.read_bytes()).hexdigest() not in sums.read_text():
+if not sums.is_file():
+    raise SystemExit("Missing SHA256SUMS; expected the post-staple release checksum record")
+entries = {}
+for line in sums.read_text().splitlines():
+    fields = line.split()
+    if len(fields) == 2 and len(fields[0]) == 64:
+        entries[fields[1]] = fields[0]
+digest = hashlib.sha256(source.read_bytes()).hexdigest()
+if entries.get(source.name) != digest:
     raise SystemExit("Release checksum mismatch")
 args.output.mkdir(parents=True, exist_ok=False)
 filename = f"performancedaddy-{match.group(1)}-build{match.group(2)}-universal.dmg"
-shutil.copy2(source, args.output / filename)
+copied = args.output / filename
+shutil.copy2(source, copied)
+if hashlib.sha256(copied.read_bytes()).hexdigest() != digest:
+    raise SystemExit("Copied update checksum mismatch")
 tool = sparkle_support.ROOT / ".build/artifacts/sparkle/Sparkle/bin/generate_appcast"
 subprocess.run([str(tool), "--account", "performancedaddy-updates", "--download-url-prefix",
                 "https://performancedaddy.significanthobbies.com/updates/", str(args.output)], check=True)

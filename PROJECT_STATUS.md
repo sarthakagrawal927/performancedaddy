@@ -12,7 +12,11 @@ and Gatekeeper-validated. The signed appcast was generated via
 This ends the private-prerelease posture: update DMGs are publicly fetchable.
 Notarization credentials were restored to Keychain as the
 `fleet-personal-notary` profile (from Infisical). SHA256SUMS records the final
-stapled artifact since stapling rewrites the DMG.
+stapled artifact since stapling rewrites the DMG. Independent review hardened
+two edges in the same window: `prepare-appcast.py` now requires a strict
+per-filename SHA256SUMS match plus a destination hash check, and busy-time
+background update checks are recorded and fired on idle rather than dropped
+(applied across all three daddy apps).
 
 ## 2026-09-20 — daddy-series update stack and grouped lists
 
