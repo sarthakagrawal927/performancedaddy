@@ -1,5 +1,27 @@
 # PerformanceDaddy status
 
+## 2026-09-20 — daddy-series update stack and grouped lists
+
+PerformanceDaddy now shares the daddy-series structure and Sparkle update stack
+with storagedaddy and browserdaddy (issue sarthakagrawal927/storagedaddy#30):
+Sparkle 2.9.6 pinned, `AppUpdates` defers checks and relaunches while a recording
+or reviewed stop action is in flight, update items live in the app menu and the
+menu-bar extra, `SU*` keys are injected at packaging by
+`scripts/package-release.py`, and `scripts/{sparkle_support,prepare-appcast,
+test_sparkle_support}.py` match the sibling repos. An updates-only Worker owns
+`performancedaddy.significanthobbies.com/updates/*` — deployed and verified live
+alongside the ios-landings Pages site; the feed is a dormant empty channel until
+the first release publishes an enclosure via `prepare-appcast.py`, which gates on
+a signed, notarized, stapled DMG plus SHA256SUMS. EdDSA signing key
+`performancedaddy-updates` stays in Keychain; only the public key is committed.
+CI parity added (`swift test`, release build, sparkle unittest, worker test).
+Also shipped: Kind/App/Category grouping on the Processes and Memory pages with
+clickable toolbar metrics ranking top contributors (issue #3), and configuration
+inventory excludes top-level personal folders (Desktop, Downloads, ...) while
+still observing project subfolders. All 93 package tests plus sparkle and worker
+tests pass. Note: the next release's DMG becomes publicly fetchable through the
+feed — the private-prerelease posture ends with that publish.
+
 ## 2026-09-20 — signed private native release
 
 PerformanceDaddy 0.2.0 (build 1) is installed from the same universal arm64/x86_64
