@@ -1,5 +1,31 @@
 # PerformanceDaddy status
 
+## 2026-09-20 — signed private native release
+
+PerformanceDaddy 0.2.0 (build 1) is installed from the same universal arm64/x86_64
+artifact published as private prerelease `v0.2.0-1`. The application and DMG are
+Developer ID signed with hardened runtime, accepted by Apple notarization, stapled,
+validated by Gatekeeper and checksum-qualified. The release tag and `origin/main`
+both resolve to `8b0407c076b0e946cc9088e98d8e916c40d170de`; the DMG SHA-256 is
+`54d42014380dadfd2f6af374bb25529d52796587d7ec0dc649d84c4efcd862e0`.
+The public landing remains informational and does not expose this private download.
+
+Durable local evidence now retains at most ten completed diagnostic captures and
+500 valid lifecycle events for 24 hours using bounded atomic owner-readable files.
+Active exit watches are deliberately not restored. Process inspection distinguishes
+an exact configured launch policy from a currently observed identity without claiming
+registration, enablement, launch cause or automatic restart. Thermal evidence uses
+Apple's supported public thermal state and power constraints; raw fan RPM and sensor
+temperatures remain explicitly unavailable rather than relying on private SMC access.
+
+The final design receipt passes in preserve mode with deterministic native captures,
+36/40 critique, 18/20 audit and no open P0/P1 findings. The exact installed app exposes
+named controls and headings through macOS accessibility and retains Command-F search.
+All 94 tests pass. A 30-second optimized-candidate sample consumed about 0.67 CPU-seconds
+(roughly 2.2% of one core) and remained below 150 MB resident; a follow-up installed-app
+sample showed idle intervals with one bounded inventory spike and remained below 175 MB.
+These are local observations on this Mac, not a universal energy or memory guarantee.
+
 ## 2026-09-20 — remote source backup
 
 Owner authorized committing and pushing the existing native product source to

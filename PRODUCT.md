@@ -101,5 +101,6 @@ review. StorageDaddy may ask PerformanceDaddy to verify whether removing or
 disabling a reviewed item changed runtime behavior. Neither product silently
 optimizes the Mac.
 
-The first milestone is a local macOS 14+ application. Distribution, telemetry,
-payments, signing, and release are outside the milestone.
+The current milestone is a local macOS 14+ application distributed as a private,
+signed and notarized prerelease. Public distribution, telemetry and payments remain
+outside the milestone.
