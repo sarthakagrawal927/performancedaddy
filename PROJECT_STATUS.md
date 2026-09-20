@@ -5,8 +5,8 @@
 PerformanceDaddy 0.2.0 (build 1) is installed from the same universal arm64/x86_64
 artifact published as private prerelease `v0.2.0-1`. The application and DMG are
 Developer ID signed with hardened runtime, accepted by Apple notarization, stapled,
-validated by Gatekeeper and checksum-qualified. The release tag and `origin/main`
-both resolve to `8b0407c076b0e946cc9088e98d8e916c40d170de`; the DMG SHA-256 is
+validated by Gatekeeper and checksum-qualified. Release tag `v0.2.0-1` resolves
+to source commit `8b0407c076b0e946cc9088e98d8e916c40d170de`; the DMG SHA-256 is
 `54d42014380dadfd2f6af374bb25529d52796587d7ec0dc649d84c4efcd862e0`.
 The public landing remains informational and does not expose this private download.
 
