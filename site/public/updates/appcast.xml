@@ -1,6 +1,14 @@
-<?xml version='1.0' encoding='utf-8'?>
+<?xml version="1.0" standalone="yes"?>
 <rss xmlns:sparkle="http://www.andymatuschak.org/xml-namespaces/sparkle" version="2.0">
     <channel>
-        <title>performancedaddy</title>
+        <title>PerformanceDaddy</title>
+        <item>
+            <title>0.2.1</title>
+            <pubDate>Sun, 20 Sep 2026 22:36:00 +0530</pubDate>
+            <sparkle:version>1</sparkle:version>
+            <sparkle:shortVersionString>0.2.1</sparkle:shortVersionString>
+            <sparkle:minimumSystemVersion>14.0</sparkle:minimumSystemVersion>
+            <enclosure url="https://performancedaddy.significanthobbies.com/updates/performancedaddy-0.2.1-build1-universal.dmg" length="7512550" type="application/octet-stream" sparkle:edSignature="cZrj08XhglYNA8mNuVt1jZuwcUrXbd4fnMV1gS5CgQFdJU97rKkBqHqPrE50axip2fjL6ccFH1VbqEIOl/4fDQ=="/>
+        </item>
     </channel>
 </rss>

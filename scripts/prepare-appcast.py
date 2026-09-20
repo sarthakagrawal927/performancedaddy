@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 """Prepare a signed appcast from an already notarized DMG. Does not deploy."""
 import argparse
+from pathlib import Path
 import hashlib
 import re
 import shutil

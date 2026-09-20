@@ -1,5 +1,19 @@
 # PerformanceDaddy status
 
+## 2026-09-20 — first public update release 0.2.1 build 1
+
+PerformanceDaddy 0.2.1 (build 1) is the first public, Sparkle-enabled release.
+Universal arm64/x86_64 DMG, Developer ID signed with hardened runtime, Apple
+notarization accepted (submission e1ce2445-0724-4eb5-ac3c-dba11d4f614a), stapled
+and Gatekeeper-validated. The signed appcast was generated via
+`scripts/prepare-appcast.py` and is served live at
+`https://performancedaddy.significanthobbies.com/updates/appcast.xml` by the
+`performancedaddy-updates` Worker; the Ed-signed enclosure downloads verified.
+This ends the private-prerelease posture: update DMGs are publicly fetchable.
+Notarization credentials were restored to Keychain as the
+`fleet-personal-notary` profile (from Infisical). SHA256SUMS records the final
+stapled artifact since stapling rewrites the DMG.
+
 ## 2026-09-20 — daddy-series update stack and grouped lists
 
 PerformanceDaddy now shares the daddy-series structure and Sparkle update stack
