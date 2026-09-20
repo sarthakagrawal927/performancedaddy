@@ -3,7 +3,7 @@ import Foundation
 import IOKit.pwr_mgt
 
 /// Kernel VM categories overlap; these are observations, not slices of a pie.
-public struct MemoryEvidence: Equatable, Sendable {
+public struct MemoryEvidence: Codable, Equatable, Sendable {
     public let freeBytes: UInt64
     public let inactiveBytes: UInt64
     public let wiredBytes: UInt64
@@ -72,7 +72,7 @@ struct MemoryEvidenceReader {
     }
 }
 
-public struct PowerEvidence: Equatable, Sendable {
+public struct PowerEvidence: Codable, Equatable, Sendable {
     public let lowPowerMode: Bool
     public let cpuSpeedLimitPercent: Int?
     public let schedulerLimitPercent: Int?

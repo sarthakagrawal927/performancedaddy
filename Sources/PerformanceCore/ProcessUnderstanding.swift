@@ -39,12 +39,20 @@ public enum ProcessUnderstanding {
 /// Ephemeral journal. Only explicitly successful signals establish a watched stop.
 /// Missing rows are not exit proof; a new matching executable is not restart proof.
 public struct ProcessLifecycleJournal: Sendable {
-    public struct Event: Identifiable, Sendable {
-        public let id = UUID()
+    public struct Event: Codable, Identifiable, Sendable {
+        public let id: UUID
         public let date: Date
         public let executable: String
         public let uid: UInt32
         public let text: String
+
+        public init(id: UUID = UUID(), date: Date, executable: String, uid: UInt32, text: String) {
+            self.id = id
+            self.date = date
+            self.executable = executable
+            self.uid = uid
+            self.text = text
+        }
     }
     private struct Watch: Sendable {
         let process: LiveProcess
@@ -55,7 +63,9 @@ public struct ProcessLifecycleJournal: Sendable {
     }
     public private(set) var events: [Event] = []
     private var watches: [Watch] = []
-    public init() {}
+    public init(events: [Event] = [], at date: Date = Date()) {
+        self.events = Self.validPersistedEvents(events, at: date)
+    }
     public var pendingExitChecks: [ProcessIdentity] {
         watches.filter { !$0.exitConfirmed }.map { $0.process.id }
     }
@@ -113,5 +123,17 @@ public struct ProcessLifecycleJournal: Sendable {
     private mutating func prune(at date: Date) {
         events.removeAll { date.timeIntervalSince($0.date) > 86_400 || $0.date > date }
         watches.removeAll { date.timeIntervalSince($0.date) > 86_400 || $0.date > date }
+    }
+
+    public static func validPersistedEvents(_ events: [Event], at date: Date) -> [Event] {
+        guard date.timeIntervalSince1970.isFinite else { return [] }
+        return Array(events.filter {
+            let timestamp = $0.date.timeIntervalSince1970
+            return timestamp.isFinite && $0.date <= date && date.timeIntervalSince($0.date) <= 86_400
+                && $0.executable.hasPrefix("/") && $0.executable.utf8.count <= 4_096
+                && !$0.executable.contains("\n") && !$0.executable.contains("\r")
+                && !$0.text.isEmpty && $0.text.utf8.count <= 2_048
+                && !$0.text.contains("\n") && !$0.text.contains("\r")
+        }.suffix(500))
     }
 }

@@ -46,7 +46,10 @@ struct ProcessUnderstandingView: View {
             }.disabled(validating)
             Text("Startup").font(.subheadline.weight(.semibold)).accessibilityAddTraits(.isHeader)
             if let metadata {
-                Text("Active startup status: Unknown").fontWeight(.medium)
+                Text(metadata.policies.isEmpty
+                     ? "Observed running now · no exact startup policy match"
+                     : "Configured and observed running now")
+                    .fontWeight(.medium)
                 DisclosureGroup("Configured policies · \(metadata.policies.count) matches") {
                   ForEach(Array(metadata.policies.enumerated()), id: \.offset) { _, policy in
                     VStack(alignment: .leading, spacing: 5) {
@@ -63,7 +66,7 @@ struct ProcessUnderstandingView: View {
                 Text("Checked \(metadata.checked) files · \(metadata.skipped) unavailable files or directories\(metadata.limited ? " · scan limit reached" : "") · \(Int(metadata.seconds * 1000)) ms")
                     .font(.caption).foregroundStyle(.secondary)
                 DisclosureGroup("Coverage and limitations") {
-                  Text("Checked \(metadata.date.formatted(date: .omitted, time: .standard)). Registration, approval, login-item databases, wrappers and live launchd overrides are not inspected. Configured policy is not proof that it is active. Limited to 512 files and 2,048 directory entries; symlinks and files over 128 KiB are skipped.")
+                  Text("Checked \(metadata.date.formatted(date: .omitted, time: .standard)). The selected identity was present in the latest PerformanceDaddy sample. Registration, approval, wrappers and live launchd overrides are not inspected. Configured-and-observed does not prove the policy launched this process or that a later matching process is an automatic restart. Limited to 512 files and 2,048 directory entries; symlinks and files over 128 KiB are skipped.")
                     .font(.caption).foregroundStyle(.secondary)
                 }
             }
@@ -97,11 +100,11 @@ struct ProcessStopHistoryView: View {
                 Spacer()
                 Button("Done") { dismiss() }.keyboardShortcut(.cancelAction)
             }
-            Text("Only stops requested through PerformanceDaddy. Up to 500 events, 100 watched stops and 24 hours in memory; quitting clears history. Sampling gaps can hide activity. A matching executable is not proof of a restart.")
+            Text("Only stops requested through PerformanceDaddy. Up to 500 events from the last 24 hours are stored locally; active exit watches are not resumed after relaunch. Sampling gaps can hide activity. A matching executable is not proof of a restart.")
                 .font(.caption).foregroundStyle(PerformanceTheme.secondaryInk)
             ScrollView {
                 LazyVStack(alignment: .leading, spacing: 16) {
-                    if model.lifecycle.events.isEmpty { Text("No stop events recorded in this app session.") }
+                    if model.lifecycle.events.isEmpty { Text("No retained stop events from the last 24 hours.") }
                     ForEach(model.lifecycle.events.reversed()) { event in
                         VStack(alignment: .leading, spacing: 4) {
                             Text("\(URL(fileURLWithPath: event.executable).lastPathComponent) · \(event.date.formatted(date: .omitted, time: .standard))").fontWeight(.medium)

@@ -25,20 +25,34 @@ final class DiagnosisViewModel: ObservableObject {
     @Published private(set) var progress = 0.0
     @Published private(set) var errorMessage: String?
     @Published private(set) var recentReports: [DiagnosticReport] = []
+    @Published private(set) var historyStorageError: String?
 
     private let recorder: DiagnosticRecorder
     private let engine = DiagnosticEngine()
+    private let historyStore: DiagnosticHistoryStore
     private var recordingTask: Task<Void, Never>?
+    private var historySaveTask: Task<Void, Never>?
+    private var historyLoaded = false
 
-    init(recorder: DiagnosticRecorder = DiagnosticRecorder()) {
+    init(recorder: DiagnosticRecorder = DiagnosticRecorder(),
+         historyStore: DiagnosticHistoryStore = DiagnosticHistoryStore()) {
         self.recorder = recorder
+        self.historyStore = historyStore
         if CommandLine.arguments.contains("--preview-fixture") {
             let before = engine.analyze(DiagnosticFixtures.temporaryBuildCapture())
             let after = engine.analyze(DiagnosticFixtures.settledCapture())
             baselineReport = before
             report = after
             comparison = engine.compare(before: before, after: after)
+            historyLoaded = true
         }
+    }
+
+    func loadHistory() async {
+        guard !historyLoaded else { return }
+        historyLoaded = true
+        let captures = await historyStore.load()
+        recentReports = captures.map(engine.analyze)
     }
 
     func startRecording() {
@@ -102,6 +116,7 @@ final class DiagnosisViewModel: ObservableObject {
         report = completed
         recentReports.insert(completed, at: 0)
         if recentReports.count > 10 { recentReports.removeLast(recentReports.count - 10) }
+        persistHistory()
     }
 
     func review(_ previous: DiagnosticReport) {
@@ -110,5 +125,26 @@ final class DiagnosisViewModel: ObservableObject {
         baselineReport = nil
         comparison = nil
         errorMessage = nil
+    }
+
+    func waitForHistoryPersistence() async {
+        await historySaveTask?.value
+    }
+
+    private func persistHistory() {
+        let captures = recentReports.map(\.capture)
+        let previous = historySaveTask
+        let store = historyStore
+        historySaveTask = Task { [weak self] in
+            await previous?.value
+            do {
+                try await store.save(captures)
+                await MainActor.run { self?.historyStorageError = nil }
+            } catch {
+                await MainActor.run {
+                    self?.historyStorageError = "Recent runs could not be saved locally."
+                }
+            }
+        }
     }
 }

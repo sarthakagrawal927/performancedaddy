@@ -8,7 +8,7 @@ public enum ThermalCondition: String, Codable, Equatable, Sendable {
     case unavailable
 }
 
-public struct ProcessObservation: Identifiable, Equatable, Sendable {
+public struct ProcessObservation: Codable, Identifiable, Equatable, Sendable {
     public let id: Int32
     public let parentID: Int32
     public let name: String
@@ -30,7 +30,7 @@ public struct ProcessObservation: Identifiable, Equatable, Sendable {
     }
 }
 
-public struct SystemSample: Equatable, Sendable {
+public struct SystemSample: Codable, Equatable, Sendable {
     public let timestamp: Date
     public let usedCPUCores: Double?
     public let memoryHeadroomRatio: Double?
@@ -67,7 +67,7 @@ public struct SystemSample: Equatable, Sendable {
     }
 }
 
-public struct DiagnosticCapture: Equatable, Sendable {
+public struct DiagnosticCapture: Codable, Equatable, Sendable {
     public let startedAt: Date
     public let endedAt: Date
     public let samples: [SystemSample]

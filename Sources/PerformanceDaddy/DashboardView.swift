@@ -32,7 +32,13 @@ struct DashboardView: View {
                                     }
                                 }
                             }.disabled(model.recentReports.isEmpty || model.isRecording)
-                                .help("Last ten completed recordings, kept in memory until you quit. No runs from earlier app sessions are stored.")
+                                .help("Last ten completed recordings, stored locally on this Mac.")
+                            if model.historyStorageError != nil {
+                                Image(systemName: "exclamationmark.triangle.fill")
+                                    .foregroundStyle(PerformanceTheme.amber)
+                                    .help(model.historyStorageError ?? "Recent-run storage unavailable")
+                                    .accessibilityLabel(model.historyStorageError ?? "Recent-run storage unavailable")
+                            }
                         }.padding(.horizontal, 28).padding(.top, 16)
                         diagnosisContent
                     }
@@ -43,7 +49,10 @@ struct DashboardView: View {
         .preferredColorScheme(.dark)
         .buttonStyle(DaddyButtonStyle())
         .toolbar(.hidden, for: .windowToolbar)
-        .task { live.start() }
+        .task {
+            await model.loadHistory()
+            live.start()
+        }
     }
 
     private var sidebar: some View {

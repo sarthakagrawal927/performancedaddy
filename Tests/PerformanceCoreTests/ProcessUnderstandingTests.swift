@@ -96,4 +96,29 @@ final class ProcessUnderstandingTests: XCTestCase {
         try Data(repeating: 0, count: 131_073).write(to: file)
         XCTAssertNil(ProcessMetadataReader.readRegularFile(file.path))
     }
+
+    func testLifecycleEventStoreRestoresOnlyBoundedValidRecentEvents() async throws {
+        let directory = FileManager.default.temporaryDirectory
+            .appendingPathComponent("pd-lifecycle-\(UUID().uuidString)")
+        let file = directory.appendingPathComponent("events.json")
+        defer { try? FileManager.default.removeItem(at: directory) }
+        let store = LifecycleHistoryStore(fileURL: file)
+        let now = date(100_000)
+        let valid = ProcessLifecycleJournal.Event(date: date(99_999), executable: "/opt/tool", uid: 501,
+            text: "Stop signal sent; exit not yet confirmed.")
+        let expired = ProcessLifecycleJournal.Event(date: date(1), executable: "/opt/tool", uid: 501,
+            text: "Expired")
+        let unsafe = ProcessLifecycleJournal.Event(date: date(99_999), executable: "relative/tool", uid: 501,
+            text: "Unsafe")
+        try await store.save([expired, valid, unsafe], at: now)
+        let restored = await store.load(at: now)
+        XCTAssertEqual(restored.map(\.id), [valid.id])
+        let attributes = try FileManager.default.attributesOfItem(atPath: file.path)
+        XCTAssertEqual((attributes[.posixPermissions] as? NSNumber)?.intValue, 0o600)
+
+        var journal = ProcessLifecycleJournal(events: restored, at: now)
+        XCTAssertEqual(journal.events.count, 1)
+        journal.observe([], at: now)
+        XCTAssertEqual(journal.events.count, 1, "restored events must not resume old watches")
+    }
 }

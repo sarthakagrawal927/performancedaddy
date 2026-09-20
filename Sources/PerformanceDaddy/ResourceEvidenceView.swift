@@ -44,12 +44,12 @@ struct ResourceEvidenceView: View {
                             row("Low Power Mode", snapshot.system.power.map { $0.lowPowerMode ? "On" : "Off" } ?? "Unavailable")
                             row("CPU speed allowance", percent(snapshot.system.power?.cpuSpeedLimitPercent))
                             row("CPU scheduling allowance", percent(snapshot.system.power?.schedulerLimitPercent))
-                            note("Allowances are macOS-reported limits, not measured clock speed. A limit alone does not identify its cause; unavailable does not mean unrestricted.")
+                            note("Thermal state comes from Apple's public ProcessInfo signal. Allowances are macOS-reported limits, not measured clock speed. A limit alone does not identify its cause; unavailable does not mean unrestricted.")
                         }
                         section("Fan & temperature coverage") {
                             row("Fan RPM", "Unavailable")
                             row("Temperature in °C", "Unavailable")
-                            note("No qualified hardware-sensor provider is enabled. This does not mean zero RPM, a fanless Mac or a cool CPU. PerformanceDaddy does not change cooling settings.")
+                            note("macOS exposes no supported public raw fan/temperature provider used by this release. This does not mean zero RPM, a fanless Mac or a cool CPU. PerformanceDaddy does not use private SMC interfaces or change cooling settings.")
                         }
                     }
                 }

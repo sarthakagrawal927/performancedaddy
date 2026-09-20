@@ -102,6 +102,19 @@ final class LiveViewModelTests: XCTestCase {
         XCTAssertNil(model.snapshot?.system.usedCPUCores)
     }
 
+    func testWakeStartsFreshRateWindow() async throws {
+        let model = LiveViewModel()
+        await model.refresh()
+        try await Task.sleep(for: .milliseconds(150))
+        await model.refresh()
+        XCTAssertNotNil(model.snapshot?.system.memory?.rateIntervalSeconds)
+        model.handleSystemWake()
+        await model.refresh()
+        XCTAssertNil(model.snapshot?.system.memory?.rateIntervalSeconds)
+        XCTAssertNil(model.snapshot?.system.memory?.swapOutBytesPerSecond)
+        XCTAssertNil(model.snapshot?.system.usedCPUCores)
+    }
+
     func testCachedRowsInvalidateOnSearchSortAndSnapshot() {
         let model = LiveViewModel()
         model.includeSystem = true

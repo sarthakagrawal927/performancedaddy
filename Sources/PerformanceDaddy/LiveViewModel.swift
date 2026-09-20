@@ -58,16 +58,35 @@ final class LiveViewModel: ObservableObject {
     private var processHistory = ProcessMemoryHistory()
     private let historyOrigin = ContinuousClock.now
     private(set) var lifecycle = ProcessLifecycleJournal()
+    private let lifecycleStore: LifecycleHistoryStore
+    private var lifecycleSaveTask: Task<Void, Never>?
+    private var lifecycleLoaded = false
     private var confirmedExits: Set<ProcessIdentity> = []
+    private var wakeObserver: NSObjectProtocol?
+
+    init(lifecycleStore: LifecycleHistoryStore = LifecycleHistoryStore()) {
+        self.lifecycleStore = lifecycleStore
+    }
 
     func start() {
         guard task == nil else { return }
+        if wakeObserver == nil {
+            wakeObserver = NSWorkspace.shared.notificationCenter.addObserver(
+                forName: NSWorkspace.didWakeNotification, object: nil, queue: .main
+            ) { [weak self] _ in
+                Task { @MainActor in self?.handleSystemWake() }
+            }
+        }
         task = Task { [weak self] in
+            await self?.restoreLifecycle()
             while !Task.isCancelled {
                 guard let self else { return }
                 let previousEventCount = lifecycle.events.count
                 lifecycle.expire(at: Date())
-                if lifecycle.events.count != previousEventCount { objectWillChange.send() }
+                if lifecycle.events.count != previousEventCount {
+                    objectWillChange.send()
+                    persistLifecycle()
+                }
                 if !paused && review == nil && !performingAction { await refresh() }
                 let interval = max(2, min(10, (snapshot?.scanSeconds ?? 0) * 20))
                 do { try await Task.sleep(for: .seconds(interval)) } catch { return }
@@ -84,6 +103,7 @@ final class LiveViewModel: ObservableObject {
             await sampler.resetMeasurementWindow()
         }
         let result = await sampler.sample()
+        let previousEventCount = lifecycle.events.count
         lifecycle.observe(result.processes, at: result.date)
         let checks = Set(lifecycle.pendingExitChecks + outcomes.filter(\.signalSent).map { $0.process.id }).subtracting(confirmedExits)
         let gone = await Task.detached(priority: .utility) {
@@ -102,6 +122,7 @@ final class LiveViewModel: ObservableObject {
             memoryHistory.removeAll { $0.date < result.date.addingTimeInterval(-300) }
         }
         refreshing = false
+        if lifecycle.events.count != previousEventCount { persistLifecycle() }
     }
 
     func rows(for page: LivePage) -> [LiveProcess] {
@@ -216,6 +237,7 @@ final class LiveViewModel: ObservableObject {
             lifecycle.record(outcome.process, at: date, force: force,
                 signalSent: outcome.signalSent, observed: beforeStop)
         }
+        persistLifecycle()
         try? await Task.sleep(for: .seconds(1))
         await refresh()
         performingAction = false
@@ -225,6 +247,32 @@ final class LiveViewModel: ObservableObject {
         if confirmedExits.contains(result.process.id) { return "Exit confirmed; original process identity is gone" }
         let live = snapshot?.processes.contains { $0.id == result.process.id } ?? false
         return live ? "Signal sent; process still observed" : "Signal sent; exit not confirmed (inspection unavailable)"
+    }
+
+    func handleSystemWake() {
+        needsNewMeasurementWindow = true
+    }
+
+    func restoreLifecycle() async {
+        guard !lifecycleLoaded else { return }
+        lifecycleLoaded = true
+        let events = await lifecycleStore.load()
+        lifecycle = ProcessLifecycleJournal(events: events)
+        objectWillChange.send()
+    }
+
+    func waitForLifecyclePersistence() async {
+        await lifecycleSaveTask?.value
+    }
+
+    private func persistLifecycle() {
+        let events = lifecycle.events
+        let previous = lifecycleSaveTask
+        let store = lifecycleStore
+        lifecycleSaveTask = Task {
+            await previous?.value
+            try? await store.save(events)
+        }
     }
 }
 

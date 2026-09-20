@@ -20,15 +20,18 @@ incident-diagnosis workspace. It runs locally without dependencies or accounts.
   selected PID/start, UID or executable changes; checks are serialized and cancelled
   when the inspector closes.
   **Inspect startup metadata** checks bounded launch configurations on demand and
-  shows exact executable matches, configured policy and coverage. Active startup
-  status remains unknown. Startup inspection does not validate publisher identity.
+  shows exact executable matches, configured policy and coverage. A selected row
+  is also observed running in the latest sample, but configuration plus observation
+  does not prove the policy launched it, that it is enabled, or why it returned.
+  Startup inspection does not validate publisher identity.
   **Review Login Items in Settings** opens the supported macOS control without edits.
 - **Stop history:** the clock-arrow toolbar button shows successful reviewed stop
   requests, missing observations, confirmed exits and later matching executables.
   A separate read-only native identity check confirms that an original instance
   is gone; missing samples or denied inspection do not prove exit. Reappearances
   are not proven automatic restarts. History
-  is local RAM only: 500 events, 100 watched stops, 24-hour expiry, cleared on quit.
+  is stored locally with a 500-event, 100-watch and 24-hour bound. Events survive
+  relaunch; active exit watches do not.
   Existing sibling instances, rejected signals and pre-stop starts do not count.
 
 - **Configuration:** on-demand metadata inventory of known shell/agent paths and
@@ -98,6 +101,19 @@ previous running copy before rebuilding. No release or installation is performed
 Use `swift run PerformanceDaddy --preview-fixture` to inspect the selected UI
 with clearly labelled synthetic before/after evidence.
 
+Completed diagnostic captures are stored locally under Application Support and
+bounded to the ten most recent runs. Reports are reconstructed with the current
+deterministic analysis engine at launch. Corrupt or incompatible history is ignored
+without preventing startup.
+
+## Native release
+
+Build and verify both architectures through XcodeBuildMCP before running
+`scripts/package-release.py`. The script accepts only fresh Release products,
+verifies bundled artwork, creates the stable `com.significanthobbies.performancedaddy`
+identity and signs with hardened runtime. It never installs, notarizes or publishes
+the candidate; those remain explicit release gates.
+
 Tracking spec: [StorageDaddy #29](https://github.com/sarthakagrawal927/storagedaddy/issues/29)
 
 ## Measurement limits
@@ -122,7 +138,9 @@ Rates reset after pause/resume, failed reads and long gaps. Memory categories
 overlap; swap rates describe VM pages, not physical disk throughput. These values
 are included explicitly in redacted snapshot exports.
 
-Raw fan RPM and temperature readings are **not implemented** and appear as
-unavailable. PerformanceDaddy does not install a helper or change fan settings.
+Raw fan RPM and temperature readings appear as unavailable because this release
+does not use unsupported private SMC interfaces. The supported signal is Apple's
+system thermal state plus public power constraints. PerformanceDaddy does not
+install a helper or change fan settings.
 CPU allowances may also be unavailable on a particular Mac; unavailable never
 means zero or unrestricted.
