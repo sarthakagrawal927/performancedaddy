@@ -5,6 +5,14 @@ import XCTest
 
 @MainActor
 final class LiveViewModelTests: XCTestCase {
+    func testLiveRefreshCadenceHasLowOverheadFloorAndBoundedBackoff() {
+        XCTAssertEqual(LiveViewModel.refreshInterval(after: nil), 10)
+        XCTAssertEqual(LiveViewModel.refreshInterval(after: .nan), 10)
+        XCTAssertEqual(LiveViewModel.refreshInterval(after: 0.1), 10)
+        XCTAssertEqual(LiveViewModel.refreshInterval(after: 0.6), 12)
+        XCTAssertEqual(LiveViewModel.refreshInterval(after: 10), 15)
+    }
+
     func testInvalidMemoryAndTimingEvidenceDoesNotTrapOrInventNumbers() {
         let model = LiveViewModel()
         let own = process(ProcessInfo.processInfo.processIdentifier, name: "PerformanceDaddy", cpu: 1)

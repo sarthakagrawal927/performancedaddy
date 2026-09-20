@@ -77,9 +77,10 @@ incident-diagnosis workspace. It runs locally without dependencies or accounts.
 - **Monitor overhead:** the footer exposes this app's CPU, resident RAM and latest
   collection duration. These are measurements, not a certified overhead budget.
 
-Snapshots refresh about every two seconds and back off when collection takes
-longer. Socket inventories refresh about every six seconds at the default
-cadence. Pause freezes the display. Collection reads process metadata, not
+Snapshots refresh about every ten seconds and back off to at most fifteen
+seconds when collection takes longer. Socket inventories refresh about every
+thirty seconds at the default cadence. Initial and manual refreshes remain
+immediate. Pause freezes the display. Collection reads process metadata, not
 prompts, transcripts, environment variables or command arguments.
 
 ## Run locally

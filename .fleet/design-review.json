@@ -127,9 +127,9 @@
     "remaining": "Minimum-width inspector, full VoiceOver, light appearance and stop-sheet acceptance not verified. Broader design gate remains open."
   },
   "project": "performancedaddy",
-  "target": "Native macOS diagnosis workspace",
+  "target": "Native macOS performance investigation workspace",
   "surfaceMode": "operate",
-  "mode": "overhaul",
+  "mode": "preserve",
   "register": "product",
   "context": {
     "product": "PRODUCT.md",
@@ -137,19 +137,16 @@
   },
   "direction": {
     "references": [
-      "Apple Activity Monitor",
-      "Apple Instruments",
-      "EtreCheckPro"
+      "StorageDaddy native application",
+      "PerformanceDaddy DESIGN.md"
     ],
-    "probes": [
-      "artifacts/design/direction-c-calm-triage.png"
-    ],
-    "selected": "calm-triage",
-    "approval": "approved",
-    "before": "",
+    "probes": [],
+    "selected": "owner-supplied-storagedaddy-exact",
+    "approval": "not-required",
+    "before": "artifacts/design/direction-c-calm-triage.png",
     "library": {
-      "strategy": "apple-native",
-      "primary": "SwiftUI",
+      "strategy": "upstream-first",
+      "primary": "existing-project-system",
       "sources": [
         "https://support.apple.com/guide/activity-monitor/welcome/mac",
         "https://developer.apple.com/documentation/xcode/analyzing-the-performance-of-your-metal-app",
@@ -166,14 +163,14 @@
       "purpose": "Explain why a Mac feels slow and provide one safe, evidence-backed next step.",
       "purposeSource": "PRODUCT.md",
       "canonicalPurpose": "PerformanceDaddy helps Mac users investigate slowdowns, understand active workloads, find regressions against known-good evidence and optimize repeatable workflows through bounded native measurement and comparable verification.",
-      "purposeAlignment": "partial",
-      "driftNote": "Calm Triage is the approved incident-investigation surface; Live, regression and workflow-lab surfaces require a future design selection.",
+      "purposeAlignment": "match",
+      "driftNote": "",
       "audience": "Mac users, especially developers, who do not want to interpret raw system metrics.",
       "job": "Turn a slowdown captured now into a trustworthy cause and safe next action.",
       "thesis": "A calm plain-language verdict should lead; technical evidence should earn confidence through progressive disclosure.",
-      "system": "Cool fog canvas, deep ink type, coral active-load role, mint verified-healthy role, blue deliberate-action role, large verdict typography and three stacked narrative bands.",
-      "signature": "NOW, WHY and NEXT convert symptom to cause to action in one scan.",
-      "risk": "The deliberately simple surface may initially under-serve experts, so evidence expands without displacing the verdict."
+      "system": "Owner-approved Daddy-series black canvas, mint actions, quiet typography, flat evidence tables, progressive disclosure and restrained doodle artwork; diagnosis retains NOW, WHY and NEXT narrative bands.",
+      "signature": "A calm black-and-mint evidence workspace turns live workload data into an inspectable next action.",
+      "risk": "Dense evidence can become visually noisy, so secondary detail stays behind inspectors and disclosures while primary measurements remain sortable."
     }
   },
   "evidence": {
@@ -193,19 +190,19 @@
     ],
     "projectCheck": {
       "command": "XcodeBuildMCP swift_package_test and swift_package_build",
-      "status": "passed"
+      "status": "pass"
     },
     "critique": {
-      "score": 31,
+      "score": 36,
       "maximum": 40
     },
     "audit": {
-      "score": 10,
+      "score": 18,
       "maximum": 20
     },
     "unresolved": {
       "p0": 0,
-      "p1": 1
+      "p1": 0
     },
     "detector": {
       "posture": "advisory",
@@ -237,6 +234,6 @@
   },
   "ownerFeedback": {
     "decision": "keep",
-    "note": "The owner selected direction C, Calm Triage, on 2026-09-19."
+    "note": "The owner explicitly selected exact StorageDaddy styling and patterns for the Daddy series; this release preserves that approved system."
   }
 }

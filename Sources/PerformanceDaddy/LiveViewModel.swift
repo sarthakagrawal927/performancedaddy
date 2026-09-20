@@ -26,6 +26,16 @@ enum LivePage: String, CaseIterable, Identifiable {
 
 @MainActor
 final class LiveViewModel: ObservableObject {
+    static let minimumRefreshInterval: Double = 10
+    static let maximumRefreshInterval: Double = 15
+
+    static func refreshInterval(after scanSeconds: Double?) -> Double {
+        guard let scanSeconds, scanSeconds.isFinite, scanSeconds >= 0 else {
+            return minimumRefreshInterval
+        }
+        return max(minimumRefreshInterval, min(maximumRefreshInterval, scanSeconds * 20))
+    }
+
     struct MemoryPoint: Identifiable { let id = UUID(); let date: Date; let used: Double }
     struct Review: Identifiable { let id = UUID(); let targets: [LiveProcess] }
     @Published var snapshot: LiveSnapshot? {
@@ -88,7 +98,7 @@ final class LiveViewModel: ObservableObject {
                     persistLifecycle()
                 }
                 if !paused && review == nil && !performingAction { await refresh() }
-                let interval = max(2, min(10, (snapshot?.scanSeconds ?? 0) * 20))
+                let interval = Self.refreshInterval(after: snapshot?.scanSeconds)
                 do { try await Task.sleep(for: .seconds(interval)) } catch { return }
             }
         }

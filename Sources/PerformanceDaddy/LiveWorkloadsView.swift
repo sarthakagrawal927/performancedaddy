@@ -71,7 +71,7 @@ struct LiveWorkloadsView: View {
             Button { Task { await model.refresh() } } label: { Image(systemName: "arrow.clockwise") }
                 .disabled(model.refreshing || model.performingAction)
                 .accessibilityLabel("Refresh processes")
-                .visibleHelp("Refresh processes now. Socket scans are spaced at least five seconds apart.")
+                .visibleHelp("Refresh processes now. Socket scans are spaced at least thirty seconds apart.")
         }
     }
 

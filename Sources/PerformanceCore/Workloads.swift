@@ -182,6 +182,7 @@ public struct WorkloadIndex: Sendable {
 }
 
 public actor WorkloadSampler {
+    static let portRefreshInterval: TimeInterval = 30
     private let systemSampler = LiveSystemSampler()
     private var counters: [ProcessIdentity: (UInt64, Double)] = [:]
     private var sockets: [ProcessIdentity: ([ListeningPort], Bool)] = [:]
@@ -203,7 +204,7 @@ public actor WorkloadSampler {
         var processes: [LiveProcess] = []
         var next: [ProcessIdentity: (UInt64, Double)] = [:]
         var missing = count <= 0 || count >= requested ? 1 : 0
-        let scanPorts = now.timeIntervalSince(portsDate) >= 5
+        let scanPorts = now.timeIntervalSince(portsDate) >= Self.portRefreshInterval
         for pid in pids.prefix(max(0, min(Int(count), pids.count))) where pid > 0 {
             var raw = PDProcess()
             guard pd_process(pid, &raw) == 1 else { missing += 1; continue }
