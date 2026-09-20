@@ -1,0 +1,13 @@
+{
+  "name": "performancedaddy-updates-site",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "wrangler dev",
+    "check": "node --test worker.test.mjs && wrangler deploy --dry-run",
+    "deploy": "npm run check && wrangler deploy"
+  },
+  "devDependencies": {
+    "wrangler": "4.125.0"
+  }
+}

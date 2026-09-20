@@ -7,3 +7,7 @@ dist/
 *.log
 # Machine-local diagnostic captures are not product source.
 artifacts/
+__pycache__/
+site/node_modules/
+site/.wrangler/
+site/public/updates/*.dmg

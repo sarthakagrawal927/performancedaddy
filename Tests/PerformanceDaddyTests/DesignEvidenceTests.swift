@@ -16,7 +16,7 @@ final class DesignEvidenceTests: XCTestCase {
             let model = LiveViewModel()
             model.snapshot = fixtureSnapshot()
             let view = NSHostingView(
-                rootView: DashboardView(live: model)
+                rootView: DashboardView(model: DiagnosisViewModel(), live: model)
                     .frame(width: specification.width, height: specification.height)
             )
             view.frame = NSRect(x: 0, y: 0, width: specification.width, height: specification.height)

@@ -2,7 +2,7 @@ import PerformanceCore
 import SwiftUI
 
 struct DashboardView: View {
-    @StateObject private var model = DiagnosisViewModel()
+    @ObservedObject var model: DiagnosisViewModel
     @ObservedObject var live: LiveViewModel
     @State private var destination = "Processes"
 

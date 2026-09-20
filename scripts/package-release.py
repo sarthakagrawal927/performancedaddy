@@ -6,6 +6,7 @@ from pathlib import Path
 import plistlib
 import shutil
 import subprocess
+import sparkle_support
 
 ROOT = Path(__file__).resolve().parents[1]
 
@@ -55,9 +56,12 @@ def main():
 
     info = plistlib.loads((ROOT / "Support/Info.plist").read_bytes())
     info.update(CFBundleIdentifier="com.significanthobbies.performancedaddy",
-                CFBundleShortVersionString=args.version, CFBundleVersion=str(args.build))
+                CFBundleShortVersionString=args.version, CFBundleVersion=str(args.build),
+                **sparkle_support.configuration())
     (contents / "Info.plist").write_bytes(plistlib.dumps(info))
 
+    sparkle_support.embed(app)
+    sparkle_support.sign(app, args.identity)
     run("codesign", "--force", "--sign", args.identity, "--timestamp", "--options", "runtime", app)
     run("codesign", "--verify", "--deep", "--strict", app)
     (stage / "Applications").symlink_to("/Applications")

@@ -4,18 +4,26 @@ import SwiftUI
 struct PerformanceDaddyApp: App {
     @NSApplicationDelegateAdaptor(PerformanceDaddyDelegate.self) private var delegate
     @StateObject private var live = LiveViewModel()
+    @StateObject private var diagnosis = DiagnosisViewModel()
+    @StateObject private var updates = AppUpdates()
     var body: some Scene {
         WindowGroup(id: "main") {
-            DashboardView(live: live)
+            DashboardView(model: diagnosis, live: live)
                 .frame(minWidth: 980, minHeight: 800)
+                .task { updates.start(live: live, diagnosis: diagnosis) }
         }
         .defaultSize(width: 1_180, height: 800)
         .windowStyle(.hiddenTitleBar)
         .commands {
             CommandGroup(replacing: .newItem) {}
+            CommandGroup(after: .appInfo) {
+                Button("Check for Updates…") { updates.check() }
+                    .disabled(!updates.canCheck || !updates.isIdle)
+                Toggle("Automatically Check for Updates", isOn: $updates.automaticallyChecks)
+            }
         }
         MenuBarExtra {
-            LiveMenu(model: live)
+            LiveMenu(model: live, updates: updates)
         } label: {
             Label(live.usedMemory, systemImage: "memorychip")
         }
@@ -36,6 +44,7 @@ enum PerformanceAppIcon {
 
 private struct LiveMenu: View {
     @ObservedObject var model: LiveViewModel
+    @ObservedObject var updates: AppUpdates
     @Environment(\.openWindow) private var openWindow
     var body: some View {
         Text("RAM estimate: \(model.usedMemory)")
@@ -47,6 +56,8 @@ private struct LiveMenu: View {
             NSApplication.shared.activate(ignoringOtherApps: true)
         }
         Button(model.paused ? "Resume monitoring" : "Pause monitoring") { model.paused.toggle() }
+        Button("Check for Updates…") { updates.check() }
+            .disabled(!updates.canCheck || !updates.isIdle)
         Divider()
         Button("Quit PerformanceDaddy") { NSApplication.shared.terminate(nil) }
     }
