@@ -29,6 +29,22 @@ final class LiveViewModel: ObservableObject {
     static let minimumRefreshInterval: Double = 10
     static let maximumRefreshInterval: Double = 15
 
+    enum ProcessGrouping: String, CaseIterable, Identifiable {
+        case none = "Off", kind = "Kind", app = "App", category = "Category"
+        var id: Self { self }
+    }
+
+    struct ProcessGroup: Identifiable {
+        let title: String
+        let rows: [LiveProcess]
+        var id: String { title }
+    }
+
+    enum ToolbarMetric: String, CaseIterable, Identifiable {
+        case ram, pressure, swap, sockets
+        var id: Self { self }
+    }
+
     static func refreshInterval(after scanSeconds: Double?) -> Double {
         guard let scanSeconds, scanSeconds.isFinite, scanSeconds >= 0 else {
             return minimumRefreshInterval
@@ -46,6 +62,7 @@ final class LiveViewModel: ObservableObject {
     @Published var selection: Set<ProcessIdentity> = []
     @Published var paused = false { didSet { if paused != oldValue { needsNewMeasurementWindow = true } } }
     @Published var includeSystem = false { didSet { rowCache.removeAll() } }
+    @Published var grouping: ProcessGrouping = .none
     @Published var memoryHistory: [MemoryPoint] = []
     @Published var review: Review?
     @Published var outcomes: [StopResult] = []
@@ -165,6 +182,69 @@ final class LiveViewModel: ObservableObject {
         }.sorted(using: sortOrder + [KeyPathComparator(\LiveProcess.id.pid)])
         rowCache[page] = result
         return result
+    }
+
+    /// Presentation-only partition of the filtered rows; group evidence is a hint, not verified ownership.
+    func groupedRows(for page: LivePage) -> [ProcessGroup] {
+        let rows = rows(for: page)
+        switch grouping {
+        case .none:
+            return [ProcessGroup(title: "", rows: rows)]
+        case .kind:
+            var buckets: [String: [LiveProcess]] = [:]
+            for row in rows { buckets[kindTitle(of: row), default: []].append(row) }
+            return Self.kindOrder.compactMap { title in
+                buckets[title].map { ProcessGroup(title: title, rows: $0) }
+            }
+        case .app, .category:
+            var order: [String] = []
+            var buckets: [String: [LiveProcess]] = [:]
+            for row in rows {
+                let title = grouping == .app ? appTitle(of: row) : categoryTitle(of: row)
+                if buckets[title] == nil { order.append(title) }
+                buckets[title, default: []].append(row)
+            }
+            return order.map { ProcessGroup(title: $0, rows: buckets[$0] ?? []) }
+        }
+    }
+
+    private static let kindOrder = ["Agents", "Apps", "System services", "Other"]
+
+    private func kindTitle(of process: LiveProcess) -> String {
+        if process.agent != nil { return "Agents" }
+        if process.appPath != nil || ancestorApp(of: process) != nil { return "Apps" }
+        if process.catalog != nil || !process.isUserProcess ||
+            ["/System/", "/usr/libexec/", "/usr/sbin/", "/sbin/"].contains(where: { process.executable.hasPrefix($0) }) {
+            return "System services"
+        }
+        return "Other"
+    }
+
+    private func appTitle(of process: LiveProcess) -> String {
+        guard let path = process.appPath ?? ancestorApp(of: process)?.appPath else { return "No app context" }
+        return URL(fileURLWithPath: path).deletingPathExtension().lastPathComponent
+    }
+
+    private func categoryTitle(of process: LiveProcess) -> String {
+        if let category = process.catalog?.category { return category }
+        if process.agent != nil { return "Agent tools" }
+        if process.appPath != nil || ancestorApp(of: process) != nil { return "Applications" }
+        return "Other processes"
+    }
+
+    /// Highest observed contributors across the whole snapshot, not just the filtered rows.
+    func topContributors(for metric: ToolbarMetric, limit: Int = 8) -> [LiveProcess] {
+        let processes = snapshot?.processes ?? []
+        switch metric {
+        case .ram, .pressure, .swap:
+            return processes
+                .sorted { $0.memory == $1.memory ? $0.id.pid < $1.id.pid : $0.memory > $1.memory }
+                .prefix(limit).map { $0 }
+        case .sockets:
+            return processes.filter { !$0.ports.isEmpty }
+                .sorted { $0.ports.count == $1.ports.count ? $0.id.pid < $1.id.pid : $0.ports.count > $1.ports.count }
+                .prefix(limit).map { $0 }
+        }
     }
 
     func family(of process: LiveProcess) -> [LiveProcess] { index.descendants(of: process) }

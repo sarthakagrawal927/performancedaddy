@@ -9,6 +9,7 @@ struct LiveWorkloadsView: View {
     let page: LivePage
     @State private var showingResourceEvidence = false
     @State private var showingHelp = false
+    @State private var topMetric: LiveViewModel.ToolbarMetric?
     @FocusState private var searchFocused: Bool
 
     var body: some View {
@@ -23,7 +24,7 @@ struct LiveWorkloadsView: View {
             } else {
                 HSplitView {
                     processTable.frame(minWidth: 440, minHeight: 0, maxHeight: .infinity)
-                    if let selected = model.rows(for: page).first(where: { model.selection.contains($0.id) }) {
+                    if let selected = model.rows(for: page).first(where: { model.selection.contains($0.id) }) ?? model.selected {
                         inspector(selected).frame(minWidth: 260, idealWidth: 320, maxWidth: 390)
                     }
                 }
@@ -77,18 +78,31 @@ struct LiveWorkloadsView: View {
 
     private var metrics: some View {
         HStack(spacing: 0) {
-            metric("RAM in use · estimate", value: model.usedMemory, detail: "of \(LiveViewModel.bytes(ProcessInfo.processInfo.physicalMemory))", color: PerformanceTheme.mintInk)
+            metricButton(.ram, title: "RAM in use · estimate", value: model.usedMemory, detail: "of \(LiveViewModel.bytes(ProcessInfo.processInfo.physicalMemory))", color: PerformanceTheme.mintInk)
             Divider()
-            metric("Memory pressure", value: model.snapshot?.pressure ?? "—", detail: "macOS signal", color: model.snapshot?.pressure == "Normal" ? PerformanceTheme.mintInk : PerformanceTheme.amber)
+            metricButton(.pressure, title: "Memory pressure", value: model.snapshot?.pressure ?? "—", detail: "macOS signal", color: model.snapshot?.pressure == "Normal" ? PerformanceTheme.mintInk : PerformanceTheme.amber)
             Divider()
-            metric("Swap", value: model.snapshot?.system.swapUsedBytes.map(LiveViewModel.bytes) ?? "—", detail: "allocated on disk", color: PerformanceTheme.blue)
+            metricButton(.swap, title: "Swap", value: model.snapshot?.system.swapUsedBytes.map(LiveViewModel.bytes) ?? "—", detail: "allocated on disk", color: PerformanceTheme.blue)
             Divider()
-            metric("Open sockets", value: model.snapshot == nil ? "—" : "\(model.portCount)", detail: "TCP listeners · bound UDP", color: PerformanceTheme.cyan)
+            metricButton(.sockets, title: "Open sockets", value: model.snapshot == nil ? "—" : "\(model.portCount)", detail: "TCP listeners · bound UDP", color: PerformanceTheme.cyan)
         }
         .frame(height: 82)
         .padding(.vertical, 8)
         .overlay(alignment: .top) { Rectangle().fill(PerformanceTheme.divider).frame(height: 1) }
         .overlay(alignment: .bottom) { Rectangle().fill(PerformanceTheme.divider).frame(height: 1) }
+        .popover(item: $topMetric, arrowEdge: .top) { metric in
+            TopContributorsView(metric: metric, model: model)
+        }
+    }
+
+    private func metricButton(_ kind: LiveViewModel.ToolbarMetric, title: String, value: String, detail: String, color: Color) -> some View {
+        Button { topMetric = kind } label: {
+            metric(title, value: value, detail: detail, color: color)
+        }
+        .buttonStyle(MetricButtonStyle())
+        .disabled(model.snapshot == nil)
+        .accessibilityHint("Show the largest observed processes for this metric")
+        .visibleHelp("Show the largest observed processes behind \(title.lowercased())")
     }
 
     private func metric(_ title: String, value: String, detail: String, color: Color) -> some View {
@@ -147,6 +161,27 @@ struct LiveWorkloadsView: View {
     @ViewBuilder private var actions: some View {
         Toggle("Include system", isOn: $model.includeSystem).toggleStyle(.checkbox)
             .help("Include system and other-user processes when macOS allows inspection")
+        if page == .workloads || page == .memory {
+            Menu("Group · \(model.grouping.rawValue)") {
+                ForEach(LiveViewModel.ProcessGrouping.allCases) { mode in
+                    Button { model.grouping = mode } label: {
+                        if model.grouping == mode {
+                            Label(mode.rawValue, systemImage: "checkmark")
+                        } else {
+                            Text(mode.rawValue)
+                        }
+                    }
+                }
+            }
+            .menuStyle(.borderlessButton)
+            .padding(.horizontal, 11).padding(.vertical, 7)
+            .foregroundStyle(PerformanceTheme.mintInk)
+            .overlay(RoundedRectangle(cornerRadius: 7).stroke(PerformanceTheme.mintInk.opacity(0.35)))
+            .fixedSize()
+            .accessibilityLabel("Group list rows")
+            .accessibilityValue(model.grouping.rawValue)
+            .help("Group rows by kind, owning app or service category. App and agent groups are evidence hints, not verified ownership.")
+        }
         Menu("Stop…") {
             Button("Selected processes (\(model.selection.count))…") { model.prepareSelected() }
                 .disabled(model.selection.isEmpty)
@@ -184,56 +219,24 @@ struct LiveWorkloadsView: View {
                 }
             }.padding(.horizontal, 4).zIndex(10)
             Rectangle().fill(PerformanceTheme.divider).frame(height: 1)
-            List(model.rows(for: page), selection: $model.selection) { process in
-                HStack(spacing: 6) {
-                    if page == .ports { prominentPorts(process) }
-                    ProcessIcon(process: process)
-                    VStack(alignment: .leading, spacing: 3) {
-                        Text(process.sortName).fontWeight(.medium).lineLimit(1)
-                        Text(model.processSubtitle(process))
-                            .font(.caption).foregroundStyle(PerformanceTheme.secondaryInk).lineLimit(1)
-                    }.frame(maxWidth: .infinity, alignment: .leading).help(process.executable)
-                    if page != .ports {
-                    Text(uptime(process)).monospacedDigit().frame(width: 76, alignment: .trailing)
-                        .accessibilityLabel("Running for \(uptime(process))")
-                    Text(process.cpu.map { String(format: "%.1f%%", $0) } ?? "—").monospacedDigit()
-                        .accessibilityLabel(process.cpu.map { String(format: "CPU %.1f percent", $0) } ?? "CPU not yet measured")
-                        .frame(width: 54, alignment: .trailing)
-                        .help(process.cpu == nil ? "CPU needs two readable samples. Refresh to measure again." : "100% CPU represents one logical core.")
-                    }
-                    Text(LiveViewModel.bytes(process.memory)).monospacedDigit()
-                        .accessibilityLabel("Resident RAM \(LiveViewModel.bytes(process.memory))")
-                        .foregroundStyle(PerformanceTheme.mintInk).frame(width: 72, alignment: .trailing)
-                    if page != .ports {
-                    Text(process.ports.isEmpty ? (process.portsIncomplete ? "Unknown" : "—") : process.portLabel)
-                        .accessibilityLabel(process.ports.isEmpty ? (process.portsIncomplete ? "Ports unavailable" : "No observed ports") : "Ports \(process.portLabel)")
-                        .monospacedDigit().foregroundStyle(process.ports.isEmpty ? PerformanceTheme.secondaryInk : PerformanceTheme.cyan)
-                        .lineLimit(2).frame(width: 96, alignment: .leading)
-                        .help(process.ports.map { "\($0.transport) \($0.endpoint)" }.joined(separator: "\n"))
-                    }
-                }.padding(.vertical, 6).tag(process.id)
-                    .listRowInsets(EdgeInsets(top: 4, leading: 4, bottom: 4, trailing: 4))
-                    .listRowBackground(model.selection.contains(process.id) ? PerformanceTheme.mintInk.opacity(0.1) : Color.black)
-                    .contextMenu {
-                        Button("Copy PID") { copy(String(process.id.pid)) }
-                        if !process.directory.isEmpty {
-                            Button("Copy project path") { copy(process.directory) }
-                            Button("Open project folder") { NSWorkspace.shared.open(URL(fileURLWithPath: process.directory)) }
+            if groupsRows {
+                List(selection: $model.selection) {
+                    ForEach(model.groupedRows(for: page)) { group in
+                        Section {
+                            ForEach(group.rows) { processRow($0) }
+                        } header: {
+                            Text("\(group.title) · \(group.rows.count)")
+                                .font(.system(size: 10, weight: .semibold)).tracking(1)
+                                .foregroundStyle(PerformanceTheme.secondaryInk)
+                                .accessibilityAddTraits(.isHeader)
                         }
-                        if !process.executable.isEmpty {
-                            Button("Reveal executable in Finder") {
-                                NSWorkspace.shared.activateFileViewerSelecting([URL(fileURLWithPath: process.executable)])
-                            }
-                        }
-                        if !process.ports.isEmpty {
-                            Button("Copy endpoints") { copy(process.ports.map { "\($0.transport) \($0.endpoint)" }.joined(separator: "\n")) }
-                        }
-                        Divider()
-                        Button("Stop this process…") { model.prepare([process]) }.disabled(process.stopRestriction != nil)
-                        Button("Review family stop…") { model.prepareTree(process) }
-                            .disabled(model.family(of: process).allSatisfy { $0.stopRestriction != nil })
                     }
-            }.listStyle(.plain).scrollContentBackground(.hidden).background(Color.black)
+                }.listStyle(.plain).scrollContentBackground(.hidden).background(Color.black)
+            } else {
+                List(model.rows(for: page), selection: $model.selection) { process in
+                    processRow(process)
+                }.listStyle(.plain).scrollContentBackground(.hidden).background(Color.black)
+            }
         }
         .overlay {
             if model.rows(for: page).isEmpty {
@@ -246,6 +249,61 @@ struct LiveWorkloadsView: View {
                 }
             }
         }
+    }
+
+    private var groupsRows: Bool {
+        (page == .workloads || page == .memory) && model.grouping != .none
+    }
+
+    private func processRow(_ process: LiveProcess) -> some View {
+        HStack(spacing: 6) {
+            if page == .ports { prominentPorts(process) }
+            ProcessIcon(process: process)
+            VStack(alignment: .leading, spacing: 3) {
+                Text(process.sortName).fontWeight(.medium).lineLimit(1)
+                Text(model.processSubtitle(process))
+                    .font(.caption).foregroundStyle(PerformanceTheme.secondaryInk).lineLimit(1)
+            }.frame(maxWidth: .infinity, alignment: .leading).help(process.executable)
+            if page != .ports {
+            Text(uptime(process)).monospacedDigit().frame(width: 76, alignment: .trailing)
+                .accessibilityLabel("Running for \(uptime(process))")
+            Text(process.cpu.map { String(format: "%.1f%%", $0) } ?? "—").monospacedDigit()
+                .accessibilityLabel(process.cpu.map { String(format: "CPU %.1f percent", $0) } ?? "CPU not yet measured")
+                .frame(width: 54, alignment: .trailing)
+                .help(process.cpu == nil ? "CPU needs two readable samples. Refresh to measure again." : "100% CPU represents one logical core.")
+            }
+            Text(LiveViewModel.bytes(process.memory)).monospacedDigit()
+                .accessibilityLabel("Resident RAM \(LiveViewModel.bytes(process.memory))")
+                .foregroundStyle(PerformanceTheme.mintInk).frame(width: 72, alignment: .trailing)
+            if page != .ports {
+            Text(process.ports.isEmpty ? (process.portsIncomplete ? "Unknown" : "—") : process.portLabel)
+                .accessibilityLabel(process.ports.isEmpty ? (process.portsIncomplete ? "Ports unavailable" : "No observed ports") : "Ports \(process.portLabel)")
+                .monospacedDigit().foregroundStyle(process.ports.isEmpty ? PerformanceTheme.secondaryInk : PerformanceTheme.cyan)
+                .lineLimit(2).frame(width: 96, alignment: .leading)
+                .help(process.ports.map { "\($0.transport) \($0.endpoint)" }.joined(separator: "\n"))
+            }
+        }.padding(.vertical, 6).tag(process.id)
+            .listRowInsets(EdgeInsets(top: 4, leading: 4, bottom: 4, trailing: 4))
+            .listRowBackground(model.selection.contains(process.id) ? PerformanceTheme.mintInk.opacity(0.1) : Color.black)
+            .contextMenu {
+                Button("Copy PID") { copy(String(process.id.pid)) }
+                if !process.directory.isEmpty {
+                    Button("Copy project path") { copy(process.directory) }
+                    Button("Open project folder") { NSWorkspace.shared.open(URL(fileURLWithPath: process.directory)) }
+                }
+                if !process.executable.isEmpty {
+                    Button("Reveal executable in Finder") {
+                        NSWorkspace.shared.activateFileViewerSelecting([URL(fileURLWithPath: process.executable)])
+                    }
+                }
+                if !process.ports.isEmpty {
+                    Button("Copy endpoints") { copy(process.ports.map { "\($0.transport) \($0.endpoint)" }.joined(separator: "\n")) }
+                }
+                Divider()
+                Button("Stop this process…") { model.prepare([process]) }.disabled(process.stopRestriction != nil)
+                Button("Review family stop…") { model.prepareTree(process) }
+                    .disabled(model.family(of: process).allSatisfy { $0.stopRestriction != nil })
+            }
     }
 
     private func copy(_ text: String) {
@@ -502,6 +560,18 @@ private struct StopReviewView: View {
             }
         }.padding(24).frame(width: 520).background(Color.black)
             .preferredColorScheme(.dark).tint(PerformanceTheme.mintInk).buttonStyle(DaddyButtonStyle())
+    }
+}
+
+private struct MetricButtonStyle: ButtonStyle {
+    @State private var hovering = false
+    @Environment(\.isEnabled) private var isEnabled
+    func makeBody(configuration: Configuration) -> some View {
+        configuration.label
+            .background(hovering && isEnabled ? PerformanceTheme.mint : .clear)
+            .contentShape(Rectangle())
+            .onHover { hovering = $0 }
+            .opacity(configuration.isPressed ? 0.7 : 1)
     }
 }
 

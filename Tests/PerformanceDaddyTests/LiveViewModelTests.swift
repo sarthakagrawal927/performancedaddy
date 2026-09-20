@@ -165,6 +165,59 @@ final class LiveViewModelTests: XCTestCase {
         }
     }
 
+    func testGroupingPartitionsRowsIntoExpectedSections() {
+        let model = LiveViewModel()
+        model.includeSystem = true
+        let agent = process(10, name: "codex", cpu: 1)
+        let app = LiveProcess(id: .init(pid: 11, started: 10), parent: 1, uid: getuid(), name: "helper",
+                              executable: "/Applications/Example.app/Contents/MacOS/helper", directory: "/", cpu: 0, memory: 1)
+        let helper = LiveProcess(id: .init(pid: 12, started: 20), parent: 11, uid: getuid(), name: "worker",
+                                 executable: "/opt/bin/worker", directory: "/", cpu: 0, memory: 1)
+        let service = LiveProcess(id: .init(pid: 13, started: 10), parent: 1, uid: 0, name: "coreaudiod",
+                                  executable: "/usr/sbin/coreaudiod", directory: "/", cpu: 0, memory: 1)
+        let other = process(14, name: "daemon", cpu: 0)
+        model.snapshot = snapshot([agent, app, helper, service, other])
+
+        model.grouping = .kind
+        let kind = model.groupedRows(for: .workloads)
+        XCTAssertEqual(kind.map(\.title), ["Agents", "Apps", "System services", "Other"])
+        XCTAssertEqual(kind.first { $0.title == "Apps" }?.rows.map(\.id.pid), [11, 12])
+        XCTAssertEqual(Set(kind.flatMap(\.rows).map(\.id.pid)), [10, 11, 12, 13, 14])
+
+        model.grouping = .app
+        let byApp = model.groupedRows(for: .workloads)
+        XCTAssertEqual(byApp.map(\.title), ["No app context", "Example"])
+        XCTAssertEqual(byApp[0].rows.map(\.id.pid), [10, 13, 14])
+        XCTAssertEqual(byApp[1].rows.map(\.id.pid), [11, 12])
+
+        model.grouping = .category
+        let byCategory = model.groupedRows(for: .workloads)
+        XCTAssertEqual(byCategory.map(\.title), ["Agent tools", "Applications", "Audio", "Other processes"])
+        XCTAssertEqual(byCategory.first { $0.title == "Audio" }?.rows.map(\.id.pid), [13])
+        XCTAssertEqual(byCategory.first { $0.title == "Applications" }?.rows.map(\.id.pid), [11, 12])
+
+        model.grouping = .none
+        XCTAssertEqual(model.groupedRows(for: .workloads).flatMap(\.rows).map(\.id.pid),
+                       model.rows(for: .workloads).map(\.id.pid))
+    }
+
+    func testTopContributorsRankMeasuredEvidence() {
+        func member(_ pid: Int32, memory: UInt64, ports: Int = 0) -> LiveProcess {
+            LiveProcess(id: .init(pid: pid, started: 10), parent: 1, uid: getuid(), name: "p\(pid)",
+                        executable: "/opt/bin/p\(pid)", directory: "/", cpu: 0, memory: memory,
+                        ports: (0..<ports).map {
+                            ListeningPort(port: UInt16(5000 + $0), transport: "TCP", address: "127.0.0.1", loopback: true)
+                        })
+        }
+        let model = LiveViewModel()
+        model.snapshot = snapshot([member(1, memory: 100), member(2, memory: 900),
+                                   member(3, memory: 500, ports: 3), member(4, memory: 500, ports: 1)])
+        XCTAssertEqual(model.topContributors(for: .ram).map(\.id.pid), [2, 3, 4, 1])
+        XCTAssertEqual(model.topContributors(for: .swap).map(\.id.pid), [2, 3, 4, 1])
+        XCTAssertEqual(model.topContributors(for: .sockets).map(\.id.pid), [3, 4])
+        XCTAssertEqual(model.topContributors(for: .ram, limit: 2).map(\.id.pid), [2, 3])
+    }
+
     private func process(_ pid: Int32, parent: Int32 = 1, name: String, cpu: Double) -> LiveProcess {
         LiveProcess(id: .init(pid: pid, started: 10), parent: parent, uid: getuid(), name: name,
                     executable: "/opt/bin/\(name)", directory: "/tmp", cpu: cpu, memory: 1_024)
