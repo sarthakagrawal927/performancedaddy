@@ -41,7 +41,7 @@ struct ConfigurationView: View {
             }
             VStack(alignment: .leading, spacing: 6) {
                 Text("Metadata only. Nothing edited or deleted.").font(.headline).foregroundStyle(PerformanceTheme.mintInk)
-                Text("Known shell and agent paths, plus known config filenames in observed user working directories. System/app-data directories are excluded. No file contents are read. Presence and age do not prove use or junk.")
+                Text("Known shell and agent paths, plus known config filenames in observed user working directories. System, app-data and top-level personal folders are excluded. No file contents are read. Presence and age do not prove use or junk.")
                     .font(.callout).foregroundStyle(PerformanceTheme.secondaryInk)
                     .fixedSize(horizontal: false, vertical: true)
             }.padding(.vertical, 12)

@@ -46,18 +46,30 @@ public enum ConfigurationInventory {
         ".ssh", ".aws", ".azure", ".kube", ".gnupg", "gcloud", "Keychains",
         "Library", ".Trash", ".cache", "node_modules", ".git",
     ]
+    /// Personal top-level folders are not project roots; their direct children
+    /// still count, so ~/Desktop/project remains an observed directory.
+    private static let nonProjectRoots: Set<String> = [
+        "Desktop", "Downloads", "Documents", "Movies", "Music", "Pictures", "Public",
+    ]
 
     public static func scan(home: String, processes: [LiveProcess]) -> ConfigurationScan {
         // URL standardization can rewrite /private/var to the /var symlink on
         // macOS. Preserve the caller's path so no-follow traversal stays exact.
         let home = home.hasSuffix("/") ? String(home.dropLast()) : home
-        let eligible = processes.filter { process in
+        var eligible: [(String, LiveProcess)] = []
+        for process in processes {
             guard process.isUserProcess, process.stopRestriction == nil,
-                  process.directory.hasPrefix(home + "/") else { return false }
-            let components = NSString(string: process.directory).pathComponents
-            return !components.contains(where: { excludedComponents.contains($0) || $0 == ".." })
+                  process.directory.hasPrefix(home + "/") else { continue }
+            var directory = process.directory
+            while directory.hasSuffix("/") { directory = String(directory.dropLast()) }
+            guard directory != home else { continue }
+            let relative = directory.dropFirst(home.count + 1)
+            guard relative.contains("/") || !nonProjectRoots.contains(String(relative)) else { continue }
+            let components = NSString(string: directory).pathComponents
+            guard !components.contains(where: { excludedComponents.contains($0) || $0 == ".." }) else { continue }
+            eligible.append((directory, process))
         }
-        let grouped = Dictionary(grouping: eligible, by: \.directory)
+        let grouped = Dictionary(grouping: eligible, by: \.0)
         let directories = grouped.keys.sorted()
         let chosen = Array(directories.prefix(32))
         var files: [ConfigurationFile] = []

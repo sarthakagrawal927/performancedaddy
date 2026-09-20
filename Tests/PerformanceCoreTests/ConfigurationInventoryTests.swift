@@ -60,6 +60,24 @@ final class ConfigurationInventoryTests: XCTestCase {
         XCTAssertTrue(result.files.isEmpty)
     }
 
+    func testPersonalFoldersAndHomeRootAreNotProjectDirectories() throws {
+        let root = try fixture()
+        defer { try? FileManager.default.removeItem(at: root) }
+        let desktop = root.appendingPathComponent("Desktop")
+        let desktopProject = desktop.appendingPathComponent("project")
+        try FileManager.default.createDirectory(at: desktopProject, withIntermediateDirectories: true)
+        try Data("{}".utf8).write(to: desktop.appendingPathComponent("package.json"))
+        try Data("[tool]".utf8).write(to: desktopProject.appendingPathComponent("pyproject.toml"))
+        let result = ConfigurationInventory.scan(home: root.path, processes: [
+            process(desktop.path), process(desktopProject.path),
+            process(root.path + "/"), process(root.path + "/Downloads"),
+        ])
+        XCTAssertEqual(result.projectDirectories, 1)
+        XCTAssertEqual(result.files.map(\.name), ["pyproject.toml"])
+        XCTAssertEqual(result.files.first?.nearbyProcesses, 1)
+        XCTAssertEqual(result.checkedPaths, 12 + 13)
+    }
+
     private func fixture() throws -> URL {
         let root = URL(fileURLWithPath: "/private/tmp", isDirectory: true)
             .appendingPathComponent("performancedaddy-config-test-" + UUID().uuidString)
