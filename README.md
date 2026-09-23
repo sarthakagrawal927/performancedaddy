@@ -35,8 +35,8 @@ incident-diagnosis workspace. It runs locally without dependencies or accounts.
   Existing sibling instances, rejected signals and pre-stop starts do not count.
 
 - **Configuration:** on-demand metadata inventory of known shell/agent paths
-  under the user's home folder. Search,
-  sort and select a file for size, modification date and Finder reveal. No content
+  under the user's home folder. Search, sort and select a file for size,
+  modification date and Finder reveal. No content
   reads, symlink following, recursive scan, edits or deletion. This does not prove
   a config was loaded, resolve inherited settings or inventory every config.
 - **Processes:** search by name, PID, project folder or port; sort by CPU, RAM,
@@ -115,7 +115,7 @@ Build and verify both architectures through XcodeBuildMCP before running
 verifies bundled artwork, creates the stable `com.significanthobbies.performancedaddy`
 identity and signs with hardened runtime. It never installs, notarizes or publishes
 the candidate; those remain explicit release gates. The current public update is
-0.2.2 (build 2), distributed through the signed Sparkle appcast at
+0.2.3 (build 3), distributed through the signed Sparkle appcast at
 `https://performancedaddy.significanthobbies.com/updates/appcast.xml`.
 
 Tracking spec: [PerformanceDaddy #2](https://github.com/sarthakagrawal927/performancedaddy/issues/2)
