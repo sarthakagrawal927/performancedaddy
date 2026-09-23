@@ -114,9 +114,9 @@ Build and verify both architectures through XcodeBuildMCP before running
 `scripts/package-release.py`. The script accepts only fresh Release products,
 verifies bundled artwork, creates the stable `com.significanthobbies.performancedaddy`
 identity and signs with hardened runtime. It never installs, notarizes or publishes
-the candidate; those remain explicit release gates. Private prerelease `v0.2.0-1`
-completed those external gates and contains a notarized universal DMG plus checksum.
-The public landing does not expose the private download.
+the candidate; those remain explicit release gates. The current public update is
+0.2.2 (build 2), distributed through the signed Sparkle appcast at
+`https://performancedaddy.significanthobbies.com/updates/appcast.xml`.
 
 Tracking spec: [PerformanceDaddy #2](https://github.com/sarthakagrawal927/performancedaddy/issues/2)
 

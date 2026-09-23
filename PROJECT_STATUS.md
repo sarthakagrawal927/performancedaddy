@@ -1,5 +1,26 @@
 # PerformanceDaddy status
 
+## 2026-09-23 — Claude Code sessions and public update 0.2.2 build 2
+
+Claude's native installer runs version-named binaries under
+`~/.local/share/claude/versions/`; exact `claude` process-name matching missed
+them. Recognition now accepts only numeric versions in that installed layout.
+The local development launcher also embeds its pinned Sparkle framework.
+All 100 package tests, the Sparkle support tests and the Worker tests pass.
+The signed release candidate and installed `/Applications` app each showed five
+live Claude Code rows in Agent sessions. This is running-process evidence, not
+conversation history or a promise that every wrapped launch is visible.
+
+The universal arm64/x86_64 DMG was Developer ID signed, notarization accepted
+(submission `d54c4f80-86a3-4e92-99b7-c7584cd0ffdb`), stapled and accepted by
+Gatekeeper. SHA-256 after stapling is
+`67ba28016282fade4129a1d7cf4e00f0ff1d2cb8bdaf9db5e2ea191ea5e7610e`.
+The installed app passed strict signature verification and matches the DMG app
+executable byte for byte. The Ed-signed 0.2.2 build 2 appcast and exact DMG are
+live on the `/updates/*` Worker (version
+`d49e559c-5e82-4525-89a3-86dd32c96615`); a public download matched the
+local DMG byte for byte. Release source: `1d83d6c` on `main`; CI passed.
+
 ## 2026-09-20 — first public update release 0.2.1 build 1
 
 PerformanceDaddy 0.2.1 (build 1) is the first public, Sparkle-enabled release.
