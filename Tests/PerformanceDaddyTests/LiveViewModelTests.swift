@@ -141,6 +141,19 @@ final class LiveViewModelTests: XCTestCase {
         XCTAssertEqual(model.rows(for: .agents).map(\.id.pid), [12])
     }
 
+    func testVersionedClaudeProcessAppearsInAgentSessions() {
+        let executable = FileManager.default.homeDirectoryForCurrentUser
+            .appendingPathComponent(".local/share/claude/versions/2.1.280").path
+        let claude = LiveProcess(id: .init(pid: 12, started: 10), parent: 1, uid: getuid(),
+                                 name: "2.1.280", executable: executable, directory: "/tmp",
+                                 cpu: 1, memory: 1_024)
+        let model = LiveViewModel()
+        model.snapshot = snapshot([claude])
+        XCTAssertEqual(model.agentCount, 1)
+        XCTAssertEqual(model.rows(for: .agents).map(\.id.pid), [12])
+        XCTAssertEqual(model.rows(for: .agents).first?.agent, "Claude")
+    }
+
     func testFamilyAggregationAndReviewDoNotDuplicateTargets() {
         let model = LiveViewModel()
         model.includeSystem = true

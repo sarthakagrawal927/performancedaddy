@@ -74,7 +74,16 @@ public enum AgentIdentity {
     ]
     public static func label(executable: String, processName: String) -> String? {
         let basename = URL(fileURLWithPath: executable).lastPathComponent.lowercased()
-        return executables[basename] ?? executables[processName.lowercased()]
+        if let known = executables[basename] ?? executables[processName.lowercased()] { return known }
+        // Claude's native installer runs the versioned target of ~/.local/bin/claude.
+        let versions = FileManager.default.homeDirectoryForCurrentUser
+            .appendingPathComponent(".local/share/claude/versions").path + "/"
+        let parts = basename.split(separator: ".", omittingEmptySubsequences: false)
+        if executable.hasPrefix(versions), parts.count == 3,
+           parts.allSatisfy({ !$0.isEmpty && $0.allSatisfy(\.isNumber) }) {
+            return "Claude"
+        }
+        return nil
     }
 }
 

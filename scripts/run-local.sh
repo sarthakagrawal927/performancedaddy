@@ -8,7 +8,12 @@ fi
 swift build --product PerformanceDaddy
 bin_path="$(swift build --show-bin-path)"
 bundle_path="$PWD/.build/PerformanceDaddy.app"
-mkdir -p "$bundle_path/Contents/MacOS" "$bundle_path/Contents/Resources"
+framework_path="$PWD/.build/artifacts/sparkle/Sparkle/Sparkle.xcframework/macos-arm64_x86_64/Sparkle.framework"
+test -d "$framework_path"
+mkdir -p "$bundle_path/Contents/MacOS" "$bundle_path/Contents/Resources" "$bundle_path/Contents/Frameworks"
+if [ ! -d "$bundle_path/Contents/Frameworks/Sparkle.framework" ]; then
+    cp -R "$framework_path" "$bundle_path/Contents/Frameworks/"
+fi
 # Replace the inode, never rewrite executable pages in place.
 cp "$bin_path/PerformanceDaddy" "$bundle_path/Contents/MacOS/PerformanceDaddy.next"
 mv -f "$bundle_path/Contents/MacOS/PerformanceDaddy.next" "$bundle_path/Contents/MacOS/PerformanceDaddy"

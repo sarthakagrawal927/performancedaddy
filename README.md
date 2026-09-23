@@ -47,7 +47,8 @@ incident-diagnosis workspace. It runs locally without dependencies or accounts.
   addresses and distinguishes loopback from non-loopback binding. This is local
   socket inventory; it does not probe other machines.
 - **Agent sessions:** exact-name recognition for Codex, Claude, Devin, Hermes,
-  Aider, Gemini CLI, OpenCode and Cursor CLI. Same-provider wrappers collapse
+  Aider, Gemini CLI, OpenCode and Cursor CLI, including Claude's versioned native
+  installer executables. Same-provider wrappers collapse
   into one workload with descendant CPU, resident RAM and ports; sibling
   launches remain separate. Generic Node/Python wrappers may not be identifiable.
   This is local process evidence, not cloud sessions or conversation activity.

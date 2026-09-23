@@ -67,6 +67,26 @@ final class WorkloadTests: XCTestCase {
         }
     }
 
+    func testNativeClaudeVersionedExecutable() {
+        let versions = FileManager.default.homeDirectoryForCurrentUser
+            .appendingPathComponent(".local/share/claude/versions").path
+        XCTAssertEqual(AgentIdentity.label(executable: "\(versions)/2.1.280", processName: "2.1.280"), "Claude")
+        XCTAssertNil(AgentIdentity.label(executable: "/tmp/claude/versions/2.1.280", processName: "2.1.280"))
+        XCTAssertNil(AgentIdentity.label(executable: "\(versions)/2.1.280-backup", processName: "2.1.280-backup"))
+    }
+
+    func testRunningNativeClaudeProcessesReachAgentGrouping() async throws {
+        let versions = FileManager.default.homeDirectoryForCurrentUser
+            .appendingPathComponent(".local/share/claude/versions").path + "/"
+        let snapshot = await WorkloadSampler().sample()
+        let claude = snapshot.processes.filter { $0.executable.hasPrefix(versions) }
+        guard !claude.isEmpty else { throw XCTSkip("No native Claude Code process is running") }
+        XCTAssertTrue(claude.allSatisfy { $0.agent == "Claude" })
+        let index = WorkloadIndex(snapshot.processes)
+        XCTAssertTrue(index.agentRoots.contains { $0.agent == "Claude" })
+        XCTAssertTrue(claude.allSatisfy { index.agentOwner(of: $0)?.agent == "Claude" })
+    }
+
     func testAgentMatchingRejectsGenericRuntimesAndLookalikes() {
         for name in ["node", "python", "Python", "agent", "Cursor", "CursorUIViewService",
                      "devin-helper", "my-codex", "claude-backup", "hermes-worker", "code"] {
