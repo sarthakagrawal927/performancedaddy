@@ -3,14 +3,12 @@ import PerformanceCore
 import SwiftUI
 
 struct ConfigurationView: View {
-    @ObservedObject var live: LiveViewModel
     @State private var scan: ConfigurationScan?
     @State private var scanning = false
     @State private var search = ""
     @State private var selection: String?
     @State private var sort = SortKey.path
     @State private var ascending = true
-    @State private var processEvidenceDate: Date?
     private enum SortKey { case path, owner, status }
 
     private var rows: [ConfigurationFile] {
@@ -31,17 +29,17 @@ struct ConfigurationView: View {
             HStack(alignment: .top) {
                 VStack(alignment: .leading, spacing: 6) {
                     Text("Configuration").font(.largeTitle.weight(.semibold)).accessibilityAddTraits(.isHeader)
-                    Text("Find the settings around your local tools and observed projects.")
+                    Text("Find settings for your local shell and agent tools.")
                         .foregroundStyle(PerformanceTheme.secondaryInk)
                 }
                 DaddyArtwork(topic: 5).frame(width: 72, height: 72)
                 Spacer()
                 Button(scanning ? "Scanning…" : "Refresh") { Task { await refresh() } }
-                    .disabled(scanning || live.snapshot == nil)
+                    .disabled(scanning)
             }
             VStack(alignment: .leading, spacing: 6) {
                 Text("Metadata only. Nothing edited or deleted.").font(.headline).foregroundStyle(PerformanceTheme.mintInk)
-                Text("Known shell and agent paths, plus known config filenames in observed user working directories. System, app-data and top-level personal folders are excluded. No file contents are read. Presence and age do not prove use or junk.")
+                Text("Known shell and agent paths under your home folder. No project directories or file contents are scanned. Presence and age do not prove use or junk.")
                     .font(.callout).foregroundStyle(PerformanceTheme.secondaryInk)
                     .fixedSize(horizontal: false, vertical: true)
             }.padding(.vertical, 12)
@@ -81,7 +79,7 @@ struct ConfigurationView: View {
             .frame(minHeight: 100, maxHeight: .infinity)
             .layoutPriority(-1)
             .overlay {
-                if scan == nil { ProgressView(scanning ? "Checking known configuration paths…" : "Waiting for local process evidence…") }
+                if scan == nil { ProgressView("Checking known configuration paths…") }
                 else if scan != nil && rows.isEmpty {
                     ContentUnavailableView(search.isEmpty ? "No files found in checked paths" : "No matching files",
                         systemImage: "doc.text.magnifyingglass",
@@ -94,7 +92,7 @@ struct ConfigurationView: View {
                     Text("\(selected.scope) · \(selected.bytes.map(LiveViewModel.bytes) ?? "Size unavailable") · Modified \(selected.modified.map { $0.formatted(date: .abbreviated, time: .shortened) } ?? "unavailable")")
                         .font(.caption).foregroundStyle(PerformanceTheme.secondaryInk)
                     HStack {
-                        Text(selected.nearbyProcesses > 0 ? "\(selected.nearbyProcesses) processes observed in this directory. Loading this file is not verified." : "Known tool location. Loading this file is not verified.")
+                        Text("Known tool location. Loading this file is not verified.")
                             .font(.caption).foregroundStyle(PerformanceTheme.secondaryInk)
                         Spacer()
                         Button("Reveal in Finder") { NSWorkspace.shared.activateFileViewerSelecting([URL(fileURLWithPath: selected.path)]) }
@@ -104,13 +102,13 @@ struct ConfigurationView: View {
             }
             if let scan {
                 VStack(alignment: .leading, spacing: 3) {
-                    Text("\(rows.count) shown · \(scan.checkedPaths) paths checked · \(scan.projectDirectories) directories · \(scan.omittedDirectories) beyond limit")
-                    Text("Metadata: \(scan.sampledAt.formatted(date: .omitted, time: .standard)) · Process evidence: \(processEvidenceDate?.formatted(date: .omitted, time: .standard) ?? "unavailable")")
+                    Text("\(rows.count) shown · \(scan.checkedPaths) paths checked")
+                    Text("Metadata: \(scan.sampledAt.formatted(date: .omitted, time: .standard))")
                 }.font(.caption).foregroundStyle(PerformanceTheme.secondaryInk)
             }
         }.padding(24).frame(width: geometry.size.width, height: geometry.size.height, alignment: .topLeading)
             .background(PerformanceTheme.fog)
-            .task(id: live.snapshot != nil) { if scan == nil && live.snapshot != nil { await refresh() } }
+            .task { if scan == nil { await refresh() } }
         }
     }
 
@@ -132,12 +130,10 @@ struct ConfigurationView: View {
         return path.hasPrefix(home + "/") ? "~" + path.dropFirst(home.count) : path
     }
     private func refresh() async {
-        guard !scanning, let captured = live.snapshot else { return }
+        guard !scanning else { return }
         scanning = true
-        let processes = captured.processes
-        processEvidenceDate = captured.date
         let home = FileManager.default.homeDirectoryForCurrentUser.path
-        scan = await Task.detached(priority: .utility) { ConfigurationInventory.scan(home: home, processes: processes) }.value
+        scan = await Task.detached(priority: .utility) { ConfigurationInventory.scan(home: home) }.value
         selection = nil
         scanning = false
     }

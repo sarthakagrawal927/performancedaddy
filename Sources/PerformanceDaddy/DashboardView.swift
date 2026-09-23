@@ -16,7 +16,7 @@ struct DashboardView: View {
                 if let page = LivePage(rawValue: destination) {
                     LiveWorkloadsView(model: live, page: page)
                 } else if destination == "Configuration" {
-                    ConfigurationView(live: live)
+                    ConfigurationView()
                 } else {
                     VStack(spacing: 0) {
                         HStack {

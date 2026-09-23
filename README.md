@@ -34,8 +34,8 @@ incident-diagnosis workspace. It runs locally without dependencies or accounts.
   relaunch; active exit watches do not.
   Existing sibling instances, rejected signals and pre-stop starts do not count.
 
-- **Configuration:** on-demand metadata inventory of known shell/agent paths and
-  config filenames in up to 32 observed eligible user working directories. Search,
+- **Configuration:** on-demand metadata inventory of known shell/agent paths
+  under the user's home folder. Search,
   sort and select a file for size, modification date and Finder reveal. No content
   reads, symlink following, recursive scan, edits or deletion. This does not prove
   a config was loaded, resolve inherited settings or inventory every config.
