@@ -39,7 +39,7 @@ final class PerformanceDaddyDelegate: NSObject, NSApplicationDelegate {
 
 @MainActor
 enum PerformanceAppIcon {
-    static let image = Bundle.module.url(forResource: "PerformanceDaddy", withExtension: "png").flatMap(NSImage.init(contentsOf:))
+    static let image = DaddyResources.url(forResource: "PerformanceDaddy").flatMap(NSImage.init(contentsOf:))
 }
 
 private struct LiveMenu: View {
