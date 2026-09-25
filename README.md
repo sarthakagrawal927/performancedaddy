@@ -114,13 +114,16 @@ Build and verify both architectures through XcodeBuildMCP before running
 `scripts/package-release.py`. The script accepts only fresh Release products,
 verifies bundled artwork, creates the stable `com.significanthobbies.performancedaddy`
 identity and signs with hardened runtime. It never installs, notarizes or publishes
-the candidate; those remain explicit release gates. The current public update is
-0.2.3 (build 3), distributed through the signed Sparkle appcast at
+the candidate; those remain explicit release gates. The public update is
+distributed through the signed Sparkle appcast at
 `https://performance.daddyrad.com/updates/appcast.xml`.
 The protected GitHub release workflow builds verified universal Release products,
 signs and notarizes an exact tagged candidate, signs its appcast with the protected
-Sparkle key, and retains the checked artifact. Publishing to the site remains a
-separate gate.
+Sparkle key, and retains the checked artifact. A manual dispatch on `main` then
+deploys that artifact and appcast to the app-owned Worker, verifies the live bytes,
+publishes the GitHub release, and records the site manifest on `main`. The
+`production-release` environment requires approval; ordinary pushes run candidate
+CI only.
 
 Tracking spec: [PerformanceDaddy #2](https://github.com/sarthakagrawal927/performancedaddy/issues/2)
 
