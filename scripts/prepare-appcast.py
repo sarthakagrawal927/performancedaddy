@@ -43,7 +43,7 @@ if hashlib.sha256(copied.read_bytes()).hexdigest() != digest:
     raise SystemExit("Copied update checksum mismatch")
 tool = sparkle_support.ROOT / ".build/artifacts/sparkle/Sparkle/bin/generate_appcast"
 subprocess.run([str(tool), "--account", "performancedaddy-updates", "--download-url-prefix",
-                "https://performancedaddy.significanthobbies.com/updates/", str(args.output)], check=True)
+                "https://performance.daddyrad.com/updates/", str(args.output)], check=True)
 feed = args.output / "appcast.xml"
 root = ET.parse(feed).getroot()
 enclosures = root.findall("./channel/item/enclosure")

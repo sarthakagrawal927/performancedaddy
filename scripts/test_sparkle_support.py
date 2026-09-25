@@ -23,7 +23,7 @@ class SparklePackagingTests(unittest.TestCase):
             with patch.object(sparkle_support, "PUBLIC_KEY", path):
                 config = sparkle_support.configuration()
             self.assertTrue(config["SUVerifyUpdateBeforeExtraction"])
-            self.assertTrue(config["SUFeedURL"].startswith("https://performancedaddy.significanthobbies.com/"))
+            self.assertTrue(config["SUFeedURL"].startswith("https://performance.daddyrad.com/"))
             self.assertFalse(config["SUAllowsAutomaticUpdates"])
             self.assertFalse(config["SUSendProfileInfo"])
 

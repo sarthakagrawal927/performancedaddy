@@ -7,7 +7,7 @@ import subprocess
 ROOT = Path(__file__).resolve().parents[1]
 FRAMEWORK = ROOT / ".build/artifacts/sparkle/Sparkle/Sparkle.xcframework/macos-arm64_x86_64/Sparkle.framework"
 PUBLIC_KEY = ROOT / "Support" / "SparklePublicKey.txt"
-FEED_URL = "https://performancedaddy.significanthobbies.com/updates/appcast.xml"
+FEED_URL = "https://performance.daddyrad.com/updates/appcast.xml"
 
 def configuration():
     if not PUBLIC_KEY.is_file():

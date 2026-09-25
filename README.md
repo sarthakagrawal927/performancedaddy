@@ -116,7 +116,7 @@ verifies bundled artwork, creates the stable `com.significanthobbies.performance
 identity and signs with hardened runtime. It never installs, notarizes or publishes
 the candidate; those remain explicit release gates. The current public update is
 0.2.3 (build 3), distributed through the signed Sparkle appcast at
-`https://performancedaddy.significanthobbies.com/updates/appcast.xml`.
+`https://performance.daddyrad.com/updates/appcast.xml`.
 
 Tracking spec: [PerformanceDaddy #2](https://github.com/sarthakagrawal927/performancedaddy/issues/2)
 
