@@ -117,6 +117,10 @@ identity and signs with hardened runtime. It never installs, notarizes or publis
 the candidate; those remain explicit release gates. The current public update is
 0.2.3 (build 3), distributed through the signed Sparkle appcast at
 `https://performance.daddyrad.com/updates/appcast.xml`.
+The protected GitHub release workflow builds verified universal Release products,
+signs and notarizes an exact tagged candidate, signs its appcast with the protected
+Sparkle key, and retains the checked artifact. Publishing to the site remains a
+separate gate.
 
 Tracking spec: [PerformanceDaddy #2](https://github.com/sarthakagrawal927/performancedaddy/issues/2)
 
