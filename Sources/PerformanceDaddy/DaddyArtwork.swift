@@ -5,8 +5,8 @@ import SwiftUI
 struct DaddyArtwork: View {
     var brand = false
     var topic = 5
-    private static let mark = Bundle.module.url(forResource: "PerformanceDaddy", withExtension: "png").flatMap(NSImage.init(contentsOf:))
-    private static let sheet = Bundle.module.url(forResource: "PageDoodles", withExtension: "png").flatMap(NSImage.init(contentsOf:))
+    private static let mark = DaddyResources.url(forResource: "PerformanceDaddy").flatMap(NSImage.init(contentsOf:))
+    private static let sheet = DaddyResources.url(forResource: "PageDoodles").flatMap(NSImage.init(contentsOf:))
     var body: some View {
         GeometryReader { geometry in
             if brand, let image = Self.mark {
@@ -18,5 +18,15 @@ struct DaddyArtwork: View {
                             y: -CGFloat(topic / 3) * geometry.size.height)
             }
         }.clipped().allowsHitTesting(false).accessibilityHidden(true)
+    }
+}
+
+enum DaddyResources {
+    static func url(forResource name: String) -> URL? {
+        let packaged = Bundle.main.resourceURL.flatMap {
+            Bundle(url: $0.appendingPathComponent("PerformanceDaddy_PerformanceDaddy.bundle"))
+        }
+        return packaged?.url(forResource: name, withExtension: "png")
+            ?? Bundle.module.url(forResource: name, withExtension: "png")
     }
 }
