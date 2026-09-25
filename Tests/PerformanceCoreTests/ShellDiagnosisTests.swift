@@ -68,9 +68,10 @@ final class ShellDiagnosisTests: XCTestCase {
     }
 
     func testOutputLimitAndEarlyExit() async throws {
-        let directory = try fixture("repeat 20000; do print -r -- 'synthetic-noisy-startup'; done")
+        let noisyLine = String(repeating: "x", count: 128)
+        let directory = try fixture("repeat 3000; do print -r -- '\(noisyLine)'; done")
         defer { try? FileManager.default.removeItem(at: directory) }
-        let noisy = try await ShellDiagnoser().measure(directory: directory, profileStartup: true)
+        let noisy = try await ShellDiagnoser().measure(directory: directory, profileStartup: true, timeout: 20)
         XCTAssertEqual(noisy.configured?.outcome, .outputLimit)
         try "exit 7".write(to: directory.appendingPathComponent(".zshrc"), atomically: true, encoding: .utf8)
         let early = try await ShellDiagnoser().measure(directory: directory, profileStartup: true)
