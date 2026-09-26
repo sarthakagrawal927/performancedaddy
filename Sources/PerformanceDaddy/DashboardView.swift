@@ -17,6 +17,8 @@ struct DashboardView: View {
                     LiveWorkloadsView(model: live, page: page)
                 } else if destination == "Configuration" {
                     ConfigurationView()
+                } else if destination == "App access" {
+                    AppAccessAuditView(live: live)
                 } else {
                     VStack(spacing: 0) {
                         HStack {
@@ -74,6 +76,7 @@ struct DashboardView: View {
                     navigationItem(page.rawValue, icon: page.icon)
                 }
                 navigationHeading("INVESTIGATE").padding(.top, 9)
+                navigationItem("App access", icon: "lock.shield")
                 navigationItem("Configuration", icon: "doc.text.magnifyingglass")
                 navigationItem("Diagnose", icon: "waveform.path.ecg")
             }

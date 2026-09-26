@@ -5,7 +5,7 @@ import SwiftUI
 /// Adapted from StorageDaddy's native application-icon pattern. Icons are
 /// cached by owning bundle, never fetched once per PID or on every sample.
 @MainActor
-private enum ProcessIconCache {
+enum ProcessIconCache {
     static let images: NSCache<NSString, NSImage> = {
         let cache = NSCache<NSString, NSImage>()
         cache.countLimit = 160
@@ -16,6 +16,10 @@ private enum ProcessIconCache {
         let components = NSString(string: executable).pathComponents
         guard let index = components.firstIndex(where: { $0.hasSuffix(".app") }) else { return nil }
         let path = NSString.path(withComponents: Array(components.prefix(index + 1)))
+        return icon(forAppPath: path)
+    }
+
+    static func icon(forAppPath path: String) -> NSImage? {
         if let cached = images.object(forKey: path as NSString) { return cached }
         let source = NSWorkspace.shared.icon(forFile: path)
         guard let bitmap = NSBitmapImageRep(bitmapDataPlanes: nil, pixelsWide: 64, pixelsHigh: 64,
@@ -31,6 +35,24 @@ private enum ProcessIconCache {
         icon.addRepresentation(bitmap)
         images.setObject(icon, forKey: path as NSString)
         return icon
+    }
+}
+
+struct AppBundleIcon: View {
+    let path: String
+    let size: CGFloat
+
+    var body: some View {
+        Group {
+            if let icon = ProcessIconCache.icon(forAppPath: path) {
+                Image(nsImage: icon).resizable().scaledToFit()
+            } else {
+                Image(systemName: "app")
+                    .foregroundStyle(PerformanceTheme.secondaryInk)
+            }
+        }
+        .frame(width: size, height: size)
+        .accessibilityHidden(true)
     }
 }
 

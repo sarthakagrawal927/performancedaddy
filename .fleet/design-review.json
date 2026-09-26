@@ -1,6 +1,15 @@
 {
   "$schema": "fleet.design-review.v1",
   "version": 1,
+  "appAccessReview": {
+    "date": "2026-09-26",
+    "mode": "preserve",
+    "direction": "Owner-supplied Daddy-series native black and mint system in DESIGN.md",
+    "contract": "Show bounded startup and app-declared access evidence; guide a dated System Settings review, show native app icons, and provide exact-item review before user launch-file Trash or supported per-app permission reset",
+    "evidence": "Native development bundle showed app logos in list rows and the selected-app header. A user LaunchAgent Trash sheet named the exact path and running-service limits; it was cancelled. System Settings showed Google Chrome Camera enabled, the app saved that dated observation, and the exact-app Camera reset sheet showed its re-prompt warning; it was cancelled.",
+    "checks": "XcodeBuildMCP SwiftPM build and local development-bundle launch passed; native accessibility and screenshots verified logos and both review sheets; design-workflow check passed",
+    "limits": "No launch file was moved or macOS permission reset during UI review. Reset uses Apple's documented per-service tccutil command, may fail for a specific bundle, and may allow a later prompt; System Settings is needed to keep access off. Shared launch files remain a Finder handoff. Minimum-window VoiceOver was not qualified, and no installed release was changed."
+  },
   "rcaEveryRecordingReview": {
     "date": "2026-09-19",
     "mode": "preserve",

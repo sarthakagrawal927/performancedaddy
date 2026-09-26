@@ -49,7 +49,7 @@ public actor DiagnosticHistoryStore {
             .appendingPathComponent(filename, isDirectory: false)
     }
 
-    fileprivate static func write(_ data: Data, to url: URL) throws {
+    static func write(_ data: Data, to url: URL) throws {
         let directory = url.deletingLastPathComponent()
         try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true,
             attributes: [.posixPermissions: 0o700])

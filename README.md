@@ -39,6 +39,26 @@ incident-diagnosis workspace. It runs locally without dependencies or accounts.
   modification date and Finder reveal. No content
   reads, symlink following, recursive scan, edits or deletion. This does not prove
   a config was loaded, resolve inherited settings or inventory every config.
+- **App access:** on-demand, bounded inventory of apps in the top level of
+  `/Applications` and `~/Applications`, plus user and shared launch-agent and
+  launch-daemon files. It shows exact executable matches to the latest process
+  sample and app privacy purpose strings. This is a partial audit: a launch file does not
+  prove an item is enabled or launched automatically; a purpose string does not
+  prove a permission grant. Login Items and other apps' privacy grants require
+  confirmation in System Settings. An optional local code-signature check shows
+  declared entitlements, which also do not establish privacy grants.
+  The owner can record dated Settings observations for each app and category;
+  these are stored locally, are not live grants, and should be rechecked after
+  app or settings changes. Apps with a sensitive category marked allowed and
+  startup evidence move to the top for review, without a safety score. The
+  audit does not read the TCC database, request permissions, or classify apps as
+  safe or malicious. After an exact-item review, a user-owned LaunchAgent file
+  can be moved to Trash; this does not stop a running service and the app may
+  recreate it. Shared launch files are revealed in Finder for manual handling.
+  For supported categories, a user-confirmed allowed note exposes a reviewed
+  per-app `tccutil` reset. Resetting forgets the decision and may let the app
+  ask again; keeping access off requires System Settings. Neither action runs
+  during scanning.
 - **Processes:** search by name, PID, project folder or port; sort by CPU, RAM,
   name or port; select a row for its context and children. Command-click selects
   multiple rows.

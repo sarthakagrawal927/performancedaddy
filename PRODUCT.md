@@ -101,6 +101,11 @@ review. StorageDaddy may ask PerformanceDaddy to verify whether removing or
 disabling a reviewed item changed runtime behavior. Neither product silently
 optimizes the Mac.
 
+For the App access surface, the owner also requested narrow, explicit actions:
+move one user-owned LaunchAgent file to Trash after exact-file review, or reset
+one app's supported macOS privacy decision after exact-app and category review.
+These do not run during sampling and do not replace StorageDaddy's wider cleanup.
+
 The current milestone is a local macOS 14+ application distributed as a private,
 signed and notarized prerelease. Public distribution, telemetry and payments remain
 outside the milestone.
