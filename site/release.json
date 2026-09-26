@@ -1,10 +1,10 @@
 {
   "app": "performancedaddy",
-  "version": "0.2.3",
-  "build": 8,
-  "sourceSha": "0c541aa03249c746615875f2af0d3f4379ee422b",
-  "filename": "performancedaddy-0.2.3-build8-universal.dmg",
-  "sha256": "97f91011f7c1791090e4a35459df20168ca00b091db975a602039f878a1907fb",
-  "bytes": 7466879,
+  "version": "0.2.4",
+  "build": 9,
+  "sourceSha": "8a9735c6eaab7f7c068983bb4a1d213dac44fe12",
+  "filename": "performancedaddy-0.2.4-build9-universal.dmg",
+  "sha256": "1fe60cff3392d624db41974f2a7fbc831bc98dac2f742eadfa5fb6350e16be08",
+  "bytes": 7950190,
   "baseUrl": "https://performance.daddyrad.com/updates/"
 }
