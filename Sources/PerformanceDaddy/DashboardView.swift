@@ -5,6 +5,9 @@ struct DashboardView: View {
     @ObservedObject var model: DiagnosisViewModel
     @ObservedObject var live: LiveViewModel
     @State private var destination = "Processes"
+    @State private var showingDeleteRecentRuns = false
+    @State private var showingDeleteBaseline = false
+    @State private var showingReplaceBaseline = false
 
     var body: some View {
         NavigationSplitView {
@@ -33,13 +36,34 @@ struct DashboardView: View {
                                               systemImage: model.report?.capture.startedAt == report.capture.startedAt ? "checkmark" : "clock")
                                     }
                                 }
+                                if !model.recentReports.isEmpty {
+                                    Divider()
+                                    Button("Delete all recent runs…", role: .destructive) {
+                                        showingDeleteRecentRuns = true
+                                    }
+                                }
                             }.disabled(model.recentReports.isEmpty || model.isRecording)
                                 .help("Last ten completed recordings, stored locally on this Mac.")
+                            if let baseline = model.savedBaselineReport {
+                                Menu("Known-good baseline") {
+                                    Button("Review saved baseline") { model.review(baseline) }
+                                    Divider()
+                                    Button("Delete saved baseline…", role: .destructive) {
+                                        showingDeleteBaseline = true
+                                    }
+                                }.disabled(model.isRecording)
+                            }
                             if model.historyStorageError != nil {
                                 Image(systemName: "exclamationmark.triangle.fill")
                                     .foregroundStyle(PerformanceTheme.amber)
                                     .help(model.historyStorageError ?? "Recent-run storage unavailable")
                                     .accessibilityLabel(model.historyStorageError ?? "Recent-run storage unavailable")
+                            }
+                            if model.baselineStorageError != nil {
+                                Image(systemName: "exclamationmark.triangle.fill")
+                                    .foregroundStyle(PerformanceTheme.amber)
+                                    .help(model.baselineStorageError ?? "Known-good baseline storage unavailable")
+                                    .accessibilityLabel(model.baselineStorageError ?? "Known-good baseline storage unavailable")
                             }
                         }.padding(.horizontal, 28).padding(.top, 16)
                         diagnosisContent
@@ -54,6 +78,30 @@ struct DashboardView: View {
         .task {
             await model.loadHistory()
             live.start()
+        }
+        .confirmationDialog("Delete all recent runs?", isPresented: $showingDeleteRecentRuns) {
+            Button("Delete \(model.recentReports.count) saved runs", role: .destructive) {
+                Task { await model.deleteRecentRuns() }
+            }
+        } message: {
+            Text("This removes the local recordings and clears the open report. A separately saved known-good baseline stays available.")
+        }
+        .confirmationDialog("Delete known-good baseline?", isPresented: $showingDeleteBaseline) {
+            Button("Delete saved baseline", role: .destructive) {
+                Task { await model.deleteKnownGoodBaseline() }
+            }
+        } message: {
+            Text("Future checks will no longer compare against this local capture. Recent runs stay available.")
+        }
+        .alert("Replace known-good baseline?", isPresented: $showingReplaceBaseline) {
+            Button("Replace baseline", role: .destructive) {
+                if let report = model.report {
+                    Task { await model.saveKnownGoodBaseline(report) }
+                }
+            }
+            Button("Cancel", role: .cancel) {}
+        } message: {
+            Text("The previous saved baseline will be replaced by this capture. Recent runs stay available.")
         }
     }
 
@@ -119,12 +167,22 @@ struct DashboardView: View {
                 report: report,
                 baseline: model.baselineReport,
                 comparison: model.comparison,
+                comparisonFromSavedBaseline: model.comparisonFromSavedBaseline,
+                savedBaseline: model.savedBaselineReport,
+                onSaveBaseline: {
+                    if model.savedBaselineReport == nil {
+                        Task { await model.saveKnownGoodBaseline(report) }
+                    } else {
+                        showingReplaceBaseline = true
+                    }
+                },
                 onVerify: model.performRecommendedAction,
                 onNewCheck: model.clearReport
             )
         } else {
             StartDiagnosisView(
                 selectedLength: $model.selectedLength,
+                savedBaseline: model.savedBaselineReport,
                 errorMessage: model.errorMessage,
                 onStart: model.startRecording
             )
@@ -135,6 +193,7 @@ struct DashboardView: View {
 private struct StartDiagnosisView: View {
     @State private var showingShellDiagnosis = false
     @Binding var selectedLength: DiagnosisViewModel.CaptureLength
+    let savedBaseline: DiagnosticReport?
     let errorMessage: String?
     let onStart: () -> Void
 
@@ -172,6 +231,12 @@ private struct StartDiagnosisView: View {
 
             Button("Start \(selectedLength.rawValue) check", action: onStart)
                 .buttonStyle(PrimaryActionButtonStyle())
+
+            if let savedBaseline {
+                Text("This check will compare with your saved baseline from \(savedBaseline.capture.startedAt.formatted(date: .abbreviated, time: .shortened)). Use a similar workload for a meaningful comparison.")
+                    .font(.callout).foregroundStyle(PerformanceTheme.secondaryInk)
+                    .multilineTextAlignment(.center).frame(maxWidth: 590)
+            }
 
             Button { showingShellDiagnosis = true } label: {
                 Label("Diagnose terminal startup…", systemImage: "terminal")
@@ -264,6 +329,9 @@ private struct ReportView: View {
     let report: DiagnosticReport
     let baseline: DiagnosticReport?
     let comparison: DiagnosticComparison?
+    let comparisonFromSavedBaseline: Bool
+    let savedBaseline: DiagnosticReport?
+    let onSaveBaseline: () -> Void
     let onVerify: () -> Void
     let onNewCheck: () -> Void
 
@@ -281,7 +349,7 @@ private struct ReportView: View {
 
                 verdict
 
-                Text("Recorded \(report.capture.startedAt.formatted(date: .abbreviated, time: .standard)) – \(report.capture.endedAt.formatted(date: .omitted, time: .standard)) · \(durationLabel) · not live data")
+                Text("Recorded \(report.capture.startedAt.formatted(date: .abbreviated, time: .standard)) – \(report.capture.endedAt.formatted(date: .omitted, time: .standard)) · \(durationLabel) · saved capture")
                     .font(.callout).foregroundStyle(PerformanceTheme.secondaryInk)
                     .frame(maxWidth: .infinity, alignment: .leading)
 
@@ -358,6 +426,10 @@ private struct ReportView: View {
                                 .buttonStyle(.bordered)
                                 .controlSize(.large)
                         }
+                        Button(baselineButtonTitle, action: onSaveBaseline)
+                            .disabled(report.capture.isFixture || isSavedBaseline)
+                        Text("Save only a run you consider representative of good performance. New checks can compare with it; the capture stays on this Mac until you delete it.")
+                            .font(.caption).foregroundStyle(PerformanceTheme.secondaryInk)
                         DisclosureGroup("Evidence limits and method") {
                             Text(methodNote)
                                 .font(.callout)
@@ -406,7 +478,7 @@ private struct ReportView: View {
     }
 
     private func comparisonBand(baseline: DiagnosticReport, comparison: DiagnosticComparison) -> some View {
-        TriageBand(label: "RESULT", subtitle: "What changed after your action") {
+        TriageBand(label: "RESULT", subtitle: comparisonFromSavedBaseline ? "Against your saved baseline" : "What changed after your action") {
             VStack(alignment: .leading, spacing: 12) {
                 Label(comparison.title, systemImage: comparisonIcon)
                     .font(.title2.bold())
@@ -415,11 +487,23 @@ private struct ReportView: View {
                 Text(comparison.detail)
                     .font(.body)
                     .foregroundStyle(PerformanceTheme.secondaryInk)
-                Text("Compared with the \(durationLabel(for: baseline)) baseline. Correlation does not prove that the action alone caused the change.")
+                Text(comparisonFromSavedBaseline
+                     ? "Compared with your saved \(durationLabel(for: baseline)) capture from \(baseline.capture.startedAt.formatted(date: .abbreviated, time: .shortened)). Different workloads can make this inconclusive."
+                     : "Compared with the \(durationLabel(for: baseline)) baseline. Correlation does not prove that the action alone caused the change.")
                     .font(.caption)
                     .foregroundStyle(.secondary)
             }
         }
+    }
+
+    private var isSavedBaseline: Bool {
+        savedBaseline?.capture.startedAt == report.capture.startedAt &&
+            savedBaseline?.capture.endedAt == report.capture.endedAt
+    }
+
+    private var baselineButtonTitle: String {
+        if isSavedBaseline { return "Saved as known-good baseline" }
+        return savedBaseline == nil ? "Save as known-good baseline" : "Replace known-good baseline"
     }
 
     private var comparisonIcon: String {

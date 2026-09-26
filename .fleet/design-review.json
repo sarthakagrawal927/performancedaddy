@@ -244,5 +244,14 @@
   "ownerFeedback": {
     "decision": "keep",
     "note": "The owner explicitly selected exact StorageDaddy styling and patterns for the Daddy series; this release preserves that approved system."
+  },
+  "knownGoodReview": {
+    "date": "2026-09-27",
+    "mode": "preserve",
+    "direction": "Existing owner-approved Daddy-series black and mint diagnosis bands",
+    "contract": "Save one user-selected known-good diagnostic capture; compare a later check; review and independently delete recent runs or the baseline",
+    "evidence": "Native development app showed the saved-baseline control on an existing report and the exact recent-run deletion confirmation; deletion was cancelled. Persistence and independent deletion passed focused tests.",
+    "checks": "XcodeBuildMCP Release build and 106 package tests, two Sparkle tests, six Worker tests, design-workflow check passed",
+    "limits": "No personal capture was saved or deleted during UI review. This compares bounded CPU, memory and thermal evidence, not app versions or workflow timing. No installed release was changed."
   }
 }

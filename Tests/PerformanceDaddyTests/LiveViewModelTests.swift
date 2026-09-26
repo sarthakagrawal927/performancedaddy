@@ -65,11 +65,19 @@ final class LiveViewModelTests: XCTestCase {
         XCTAssertEqual(model.rows(for: .workloads).map(\.id.pid), [901, 902])
     }
     func testReviewedOwnedChildStopReachesLifecycleJournal() async throws {
+        let directory = FileManager.default.temporaryDirectory.appendingPathComponent("performancedaddy-stop-\(UUID().uuidString)")
+        try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
+        let executable = directory.appendingPathComponent("sleep")
+        try FileManager.default.copyItem(at: URL(fileURLWithPath: "/bin/sleep"), to: executable)
         let child = Process()
-        child.executableURL = URL(fileURLWithPath: "/bin/sleep")
+        child.executableURL = executable
         child.arguments = ["30"]
         try child.run()
-        defer { if child.isRunning { child.terminate() } }
+        defer {
+            if child.isRunning { child.terminate() }
+            child.waitUntilExit()
+            try? FileManager.default.removeItem(at: directory)
+        }
         let model = LiveViewModel()
         await model.refresh()
         let observed = try XCTUnwrap(model.snapshot?.processes.first { $0.id.pid == child.processIdentifier })

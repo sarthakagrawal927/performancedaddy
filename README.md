@@ -80,8 +80,9 @@ incident-diagnosis workspace. It runs locally without dependencies or accounts.
   A large net increase is a review cue, not a leak diagnosis. Histories reset
   across missing observations, pause and long gaps. Physical footprint and
   cumulative native disk-read/write counters are separate measurements; agent
-  inspectors explicitly show the root process, not family totals. These new
-  inspector fields are not yet included in snapshot export.
+  inspectors explicitly show the root process, not family totals. Physical
+  footprint and cumulative disk counters are also included in redacted snapshot
+  exports when available; they are not disk throughput or family totals.
 - **Stop:** review selected processes, a process family, or all currently
   matching rows. Normal stop sends SIGTERM; force stop explicitly sends SIGKILL.
   The review freezes exact targets and checks PID/start-time identity again at
@@ -126,7 +127,11 @@ with clearly labelled synthetic before/after evidence.
 Completed diagnostic captures are stored locally under Application Support and
 bounded to the ten most recent runs. Reports are reconstructed with the current
 deterministic analysis engine at launch. Corrupt or incompatible history is ignored
-without preventing startup.
+without preventing startup. In Diagnose, you can save one owner-selected capture
+as a known-good baseline, compare later recordings with it, and delete the saved
+baseline or all recent runs independently. Comparisons require similar workloads
+and enough comparable evidence; the app does not claim that a coincident change
+caused a regression. Local captures remain until replaced or explicitly deleted.
 
 ## Native release
 
@@ -155,8 +160,8 @@ pages and cannot be summed into physical RAM usage. CPU uses 100% per logical
 core. Ports may be unavailable due to permissions, process exits or bounded
 scan limits; a non-loopback bind alone does not establish network reachability.
 
-Known-good baselines, workflow experiments, retained history, disk/GPU/network
-throughput and StorageDaddy handoff remain future work.
+Repeatable workflow experiments, compact derived history with sample expiry,
+disk/GPU/network throughput and StorageDaddy handoff remain future work.
 
 Before/after diagnosis rejects insufficient or mismatched evidence and reports
 mixed resource changes as inconclusive. Allocated swap alone is not a diagnosis

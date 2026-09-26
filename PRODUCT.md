@@ -106,6 +106,8 @@ move one user-owned LaunchAgent file to Trash after exact-file review, or reset
 one app's supported macOS privacy decision after exact-app and category review.
 These do not run during sampling and do not replace StorageDaddy's wider cleanup.
 
-The current milestone is a local macOS 14+ application distributed as a private,
-signed and notarized prerelease. Public distribution, telemetry and payments remain
-outside the milestone.
+The current macOS 14+ application is publicly distributed as a signed and
+notarized download with local Sparkle updates. Telemetry and payments remain
+outside the product. A single saved capture can anchor a resource comparison;
+application/startup change attribution, repeatable workflow experiments, and
+compact retained evidence remain later product requirements.

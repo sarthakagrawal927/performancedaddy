@@ -21,23 +21,29 @@ final class DiagnosisViewModel: ObservableObject {
     @Published private(set) var report: DiagnosticReport?
     @Published private(set) var baselineReport: DiagnosticReport?
     @Published private(set) var comparison: DiagnosticComparison?
+    @Published private(set) var comparisonFromSavedBaseline = false
+    @Published private(set) var savedBaselineReport: DiagnosticReport?
     @Published private(set) var isRecording = false
     @Published private(set) var progress = 0.0
     @Published private(set) var errorMessage: String?
     @Published private(set) var recentReports: [DiagnosticReport] = []
     @Published private(set) var historyStorageError: String?
+    @Published private(set) var baselineStorageError: String?
 
     private let recorder: DiagnosticRecorder
     private let engine = DiagnosticEngine()
     private let historyStore: DiagnosticHistoryStore
+    private let baselineStore: KnownGoodBaselineStore
     private var recordingTask: Task<Void, Never>?
     private var historySaveTask: Task<Void, Never>?
     private var historyLoaded = false
 
     init(recorder: DiagnosticRecorder = DiagnosticRecorder(),
-         historyStore: DiagnosticHistoryStore = DiagnosticHistoryStore()) {
+         historyStore: DiagnosticHistoryStore = DiagnosticHistoryStore(),
+         baselineStore: KnownGoodBaselineStore = KnownGoodBaselineStore()) {
         self.recorder = recorder
         self.historyStore = historyStore
+        self.baselineStore = baselineStore
         if CommandLine.arguments.contains("--preview-fixture") {
             let before = engine.analyze(DiagnosticFixtures.temporaryBuildCapture())
             let after = engine.analyze(DiagnosticFixtures.settledCapture())
@@ -53,23 +59,27 @@ final class DiagnosisViewModel: ObservableObject {
         historyLoaded = true
         let captures = await historyStore.load()
         recentReports = captures.map(engine.analyze)
+        if let baseline = await baselineStore.load() {
+            savedBaselineReport = engine.analyze(baseline)
+        }
     }
 
     func startRecording() {
-        beginRecording(preservingCurrentReport: false)
+        beginRecording(comparingTo: savedBaselineReport, fromSavedBaseline: savedBaselineReport != nil)
     }
 
     func performRecommendedAction() {
         if report?.finding.kind == .healthy || report?.finding.kind == .inconclusive {
             selectedLength = .standard
         }
-        beginRecording(preservingCurrentReport: true)
+        beginRecording(comparingTo: report, fromSavedBaseline: false)
     }
 
-    private func beginRecording(preservingCurrentReport: Bool) {
+    private func beginRecording(comparingTo baseline: DiagnosticReport?, fromSavedBaseline: Bool) {
         recordingTask?.cancel()
-        let previous = preservingCurrentReport ? report : nil
-        baselineReport = previous
+        let previousReport = report
+        baselineReport = baseline
+        comparisonFromSavedBaseline = fromSavedBaseline
         comparison = nil
         isRecording = true
         progress = 0
@@ -85,15 +95,19 @@ final class DiagnosisViewModel: ObservableObject {
                 }
                 let nextReport = engine.analyze(capture)
                 accept(nextReport)
-                if let previous {
-                    comparison = engine.compare(before: previous, after: nextReport)
+                if let baseline {
+                    comparison = engine.compare(before: baseline, after: nextReport)
                 }
             } catch is CancellationError {
                 errorMessage = "The recording was cancelled. No changes were made."
-                report = previous
+                report = previousReport
+                baselineReport = nil
+                comparisonFromSavedBaseline = false
             } catch {
                 errorMessage = "The recording could not finish: \(error.localizedDescription)"
-                report = previous
+                report = previousReport
+                baselineReport = nil
+                comparisonFromSavedBaseline = false
             }
             isRecording = false
         }
@@ -108,6 +122,7 @@ final class DiagnosisViewModel: ObservableObject {
         report = nil
         baselineReport = nil
         comparison = nil
+        comparisonFromSavedBaseline = false
         errorMessage = nil
         progress = 0
     }
@@ -124,7 +139,51 @@ final class DiagnosisViewModel: ObservableObject {
         report = previous
         baselineReport = nil
         comparison = nil
+        comparisonFromSavedBaseline = false
         errorMessage = nil
+    }
+
+    func saveKnownGoodBaseline(_ selected: DiagnosticReport) async {
+        guard !isRecording, !selected.capture.isFixture else { return }
+        do {
+            try await baselineStore.save(selected.capture)
+            savedBaselineReport = selected
+            if comparisonFromSavedBaseline {
+                baselineReport = nil
+                comparison = nil
+                comparisonFromSavedBaseline = false
+            }
+            baselineStorageError = nil
+        } catch {
+            baselineStorageError = "The known-good baseline could not be saved locally."
+        }
+    }
+
+    func deleteKnownGoodBaseline() async {
+        do {
+            try await baselineStore.delete()
+            savedBaselineReport = nil
+            if comparisonFromSavedBaseline {
+                baselineReport = nil
+                comparison = nil
+                comparisonFromSavedBaseline = false
+            }
+            baselineStorageError = nil
+        } catch {
+            baselineStorageError = "The known-good baseline could not be removed."
+        }
+    }
+
+    func deleteRecentRuns() async {
+        await historySaveTask?.value
+        do {
+            try await historyStore.deleteAll()
+            recentReports = []
+            clearReport()
+            historyStorageError = nil
+        } catch {
+            historyStorageError = "Recent runs could not be removed locally."
+        }
     }
 
     func waitForHistoryPersistence() async {

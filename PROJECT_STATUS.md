@@ -1,5 +1,29 @@
 # PerformanceDaddy status
 
+## 2026-09-27 — local follow-up prepared for review
+
+Source changes add launch-file scope counts and app icons where a file points
+into an app bundle, include already-measured footprint and cumulative disk
+counters in anonymous snapshot exports, and add a locally saved known-good
+capture with independent recent-run and baseline deletion. All 106 package
+tests, two Sparkle support tests, six Worker tests, the native Release build and
+the design-workflow check pass. A separate development app showed the new
+baseline action and exact recent-run deletion review; the review was cancelled.
+This qualification used a separate development app and left the installed
+public build 9 unchanged; publication and installation require their own
+release receipts.
+
+## 2026-09-26 — public 0.2.4 build 9
+
+The protected release workflow published signed, notarized `v0.2.4-9` from
+`8a9735c`. The public download and Sparkle feed were verified against the
+qualified artifact, and build 9 is installed in `/Applications`. The release
+adds the bounded App access audit, dated manual Settings notes, reviewed
+single-file LaunchAgent Trash actions and reviewed per-app permission resets.
+macOS does not provide this app a supported readout of other apps' live privacy
+grants or a way to unregister another app's Login Item; those reviews remain in
+System Settings.
+
 ## 2026-09-23 — Claude Code sessions and public update 0.2.2 build 2
 
 Claude's native installer runs version-named binaries under

@@ -17,6 +17,9 @@ final class SnapshotExportTests: XCTestCase {
         XCTAssertEqual(rows[1]["parentAlias"] as? String, rows[0]["alias"] as? String)
         XCTAssertEqual(rows[0]["cpuPercent"] as? Double, 25)
         XCTAssertEqual(rows[0]["residentBytes"] as? Int, 1024)
+        XCTAssertEqual(rows[0]["physicalFootprintBytes"] as? Int, 768)
+        XCTAssertEqual(rows[0]["cumulativeDiskReadBytes"] as? Int, 4_096)
+        XCTAssertEqual(rows[0]["cumulativeDiskWrittenBytes"] as? Int, 2_048)
         XCTAssertEqual((rows[0]["ports"] as? [[String: Any]])?.first?["number"] as? Int, 3000)
     }
 
@@ -25,6 +28,9 @@ final class SnapshotExportTests: XCTestCase {
         let json = try XCTUnwrap(JSONSerialization.jsonObject(with: data) as? [String: Any])
         let rows = try XCTUnwrap(json["processes"] as? [[String: Any]])
         XCTAssertNil(rows[0]["cpuPercent"])
+        XCTAssertNil(rows[1]["physicalFootprintBytes"])
+        XCTAssertNil(rows[1]["cumulativeDiskReadBytes"])
+        XCTAssertNil(rows[1]["cumulativeDiskWrittenBytes"])
         XCTAssertNil(json["swapBytes"])
         XCTAssertEqual(json["unavailableProcesses"] as? Int, 3)
         XCTAssertEqual(rows[0]["portsIncomplete"] as? Bool, true)
@@ -57,7 +63,8 @@ final class SnapshotExportTests: XCTestCase {
         let parent = LiveProcess(id: .init(pid: 987654, started: 10), parent: 1, uid: 501,
             name: "custom-sensitive-name", executable: "/Users/secret-owner/bin/devin",
             directory: "/Users/secret-owner/private-client", cpu: cpu, memory: 1024,
-            ports: [.init(port: 3000, transport: "TCP", address: "192.168.7.33", loopback: false)], portsIncomplete: true)
+            ports: [.init(port: 3000, transport: "TCP", address: "192.168.7.33", loopback: false)], portsIncomplete: true,
+            footprint: 768, diskReadBytes: 4_096, diskWrittenBytes: 2_048)
         let child = LiveProcess(id: .init(pid: 987655, started: 11), parent: 987654, uid: 501,
             name: "custom-sensitive-name", executable: "/bin/node", directory: "/Users/secret-owner/private-client",
             cpu: nil, memory: 512)

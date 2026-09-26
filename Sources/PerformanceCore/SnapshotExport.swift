@@ -20,7 +20,7 @@ public enum SnapshotExport {
         let unavailableProcesses: Int
         let processes: [ProcessRecord]
         let privacy = "Process names, executable/project paths, raw PIDs, start times and bind addresses omitted. Aliases apply only within this snapshot."
-        let limits = "Resident memory includes shared pages. CPU 100% is one logical core. Agent labels identify local executable metadata, not conversation status. This snapshot does not prove a cause or an improvement."
+        let limits = "Resident memory includes shared pages. Physical footprint is a separate estimate. Disk bytes are cumulative process counters, not throughput. CPU 100% is one logical core. Agent labels identify local executable metadata, not conversation status. This snapshot does not prove a cause or an improvement."
     }
     private struct ProcessRecord: Encodable {
         let alias: String
@@ -28,6 +28,9 @@ public enum SnapshotExport {
         let agent: String?
         let cpuPercent: Double?
         let residentBytes: UInt64
+        let physicalFootprintBytes: UInt64?
+        let cumulativeDiskReadBytes: UInt64?
+        let cumulativeDiskWrittenBytes: UInt64?
         let ports: [PortRecord]
         let portsIncomplete: Bool
     }
@@ -65,6 +68,9 @@ public enum SnapshotExport {
             return ProcessRecord(alias: aliases[process.id.pid]!,
                 parentAlias: parent.map { $0.id.started <= process.id.started } == true ? aliases[process.parent] : nil,
                 agent: process.agent, cpuPercent: finite(process.cpu), residentBytes: process.memory,
+                physicalFootprintBytes: process.footprint,
+                cumulativeDiskReadBytes: process.diskReadBytes,
+                cumulativeDiskWrittenBytes: process.diskWrittenBytes,
                 ports: process.ports.map { PortRecord(number: $0.port, transport: $0.transport == "TCP" ? "TCP" : "UDP", scope: $0.loopback ? "loopback" : "non-loopback") },
                 portsIncomplete: process.portsIncomplete)
         }

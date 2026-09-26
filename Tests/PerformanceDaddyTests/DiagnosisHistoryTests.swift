@@ -48,6 +48,35 @@ final class DiagnosisHistoryTests: XCTestCase {
         XCTAssertEqual(try Data(contentsOf: fixture), Data("not-json".utf8))
     }
 
+    func testKnownGoodBaselineSurvivesRecentRunDeletionUntilExplicitlyRemoved() async throws {
+        let historyFile = temporaryFile("diagnostic-history.json")
+        let baselineFile = historyFile.deletingLastPathComponent().appendingPathComponent("known-good-baseline.json")
+        defer { try? FileManager.default.removeItem(at: historyFile.deletingLastPathComponent()) }
+        let historyStore = DiagnosticHistoryStore(fileURL: historyFile)
+        let baselineStore = KnownGoodBaselineStore(fileURL: baselineFile)
+        let model = DiagnosisViewModel(historyStore: historyStore, baselineStore: baselineStore)
+        let start = Date()
+        let capture = DiagnosticCapture(startedAt: start, endedAt: start.addingTimeInterval(15), samples: [])
+        let report = DiagnosticEngine().analyze(capture)
+        model.accept(report)
+        await model.waitForHistoryPersistence()
+        await model.saveKnownGoodBaseline(report)
+        XCTAssertEqual(model.savedBaselineReport?.capture.startedAt, start)
+
+        let restarted = DiagnosisViewModel(historyStore: historyStore, baselineStore: baselineStore)
+        await restarted.loadHistory()
+        XCTAssertEqual(restarted.recentReports.count, 1)
+        XCTAssertEqual(restarted.savedBaselineReport?.capture.startedAt, start)
+        await restarted.deleteRecentRuns()
+        XCTAssertTrue(restarted.recentReports.isEmpty)
+        XCTAssertFalse(FileManager.default.fileExists(atPath: historyFile.path))
+        XCTAssertEqual(restarted.savedBaselineReport?.capture.startedAt, start)
+
+        await restarted.deleteKnownGoodBaseline()
+        XCTAssertNil(restarted.savedBaselineReport)
+        XCTAssertFalse(FileManager.default.fileExists(atPath: baselineFile.path))
+    }
+
     private func temporaryFile(_ name: String) -> URL {
         FileManager.default.temporaryDirectory
             .appendingPathComponent("performancedaddy-history-\(UUID().uuidString)", isDirectory: true)

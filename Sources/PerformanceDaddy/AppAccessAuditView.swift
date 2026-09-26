@@ -37,9 +37,11 @@ struct AppAccessAuditView: View {
             return $0.name.localizedStandardCompare($1.name) == .orderedAscending
         }
     }
+    private var allStartupItems: [StartupAuditItem] {
+        (audit?.apps.flatMap(\.startupItems) ?? []) + (audit?.otherStartupItems ?? [])
+    }
     private var startupItems: [StartupAuditItem] {
-        let all = (audit?.apps.flatMap(\.startupItems) ?? []) + (audit?.otherStartupItems ?? [])
-        return all.filter {
+        allStartupItems.filter {
             search.isEmpty || "\($0.label) \($0.context) \($0.source) \($0.executable ?? "")"
                 .localizedCaseInsensitiveContains(search)
         }.sorted { $0.label.localizedStandardCompare($1.label) == .orderedAscending }
@@ -88,7 +90,7 @@ struct AppAccessAuditView: View {
             }
             VStack(alignment: .leading, spacing: 5) {
                 Text("Partial audit · reviewed actions").font(.headline).foregroundStyle(PerformanceTheme.amber)
-                Text("The scan is read-only. Check Login Items and privacy categories in Settings, then record what you see. Dated notes are not live grants. Exact-item Trash and permission-reset actions require a separate review.")
+                Text("Launch files and Open at Login are separate. Check Login Items and privacy categories in Settings, then record what you see. Dated notes are not live grants. Exact-item Trash and permission-reset actions require a separate review.")
                     .font(.callout).foregroundStyle(PerformanceTheme.secondaryInk)
                     .fixedSize(horizontal: false, vertical: true)
             }.padding(.vertical, 10)
@@ -129,7 +131,12 @@ struct AppAccessAuditView: View {
                     } else {
                         ForEach(startupItems) { item in
                             HStack(spacing: 8) {
-                                Image(systemName: "gearshape.2").foregroundStyle(PerformanceTheme.amber).frame(width: 20)
+                                if let appPath = item.appPath {
+                                    AppBundleIcon(path: appPath, size: 28)
+                                } else {
+                                    Image(systemName: "gearshape.2")
+                                        .foregroundStyle(PerformanceTheme.amber).frame(width: 28, height: 28)
+                                }
                                 VStack(alignment: .leading, spacing: 3) {
                                     Text(item.label).fontWeight(.medium).lineLimit(1)
                                     Text(item.context + " · " + item.launch)
@@ -170,7 +177,12 @@ struct AppAccessAuditView: View {
             }.frame(minHeight: 100, maxHeight: .infinity)
                 .layoutPriority(-1)
             if let audit {
+                let userAgents = allStartupItems.filter { $0.context == "User login agent" }.count
+                let sharedAgents = allStartupItems.filter { $0.context == "All-user login agent" }.count
+                let systemDaemons = allStartupItems.filter { $0.context == "System startup daemon" }.count
                 Text("\(audit.apps.count) top-level apps · \(audit.checkedStartupFiles) launch files checked · \(audit.unavailable) unavailable entries\(audit.limited ? " · scan limit reached" : "") · \(audit.date.formatted(date: .omitted, time: .standard))")
+                    .font(.caption).foregroundStyle(PerformanceTheme.secondaryInk)
+                Text("\(userAgents) user agents · \(sharedAgents) all-user agents · \(systemDaemons) system daemons · Open at Login is reviewed in Settings")
                     .font(.caption).foregroundStyle(PerformanceTheme.secondaryInk)
             }
         }.padding(24)
@@ -343,6 +355,9 @@ struct AppAccessAuditView: View {
     private func startupSummary(_ item: StartupAuditItem) -> some View {
         VStack(alignment: .leading, spacing: 4) {
             Text(item.context).fontWeight(.medium)
+            if let appPath = item.appPath {
+                Text("App: \(appPath)").font(.caption).textSelection(.enabled)
+            }
             Text(item.launch)
             Text(item.keepAlive)
             Text(audit?.liveSampleAvailable == false ? "Live process sample unavailable" :
