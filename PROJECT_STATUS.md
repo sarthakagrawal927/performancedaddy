@@ -1,5 +1,20 @@
 # PerformanceDaddy status
 
+## 2026-09-27 — public 0.2.5 build 10 installed
+
+The protected workflow published `v0.2.5-10` from source `cdecb4c` after
+exact-source candidate checks, universal build, Developer ID signing, launch
+smoke test, Apple notarization (`d4f58803-f482-4119-b54a-01515356f64c`),
+stapling, signed appcast and live download verification. The released DMG SHA-256
+is `acb6575b9a2d59a03bcb8b97d61b6529b03fc285a4a8bdb6fd37a6da6187d790`.
+The downloaded artifact passed its published checksum, Gatekeeper and strict
+signature checks. `/Applications/PerformanceDaddy.app` is now 0.2.5 build 10;
+its executable matches the released image byte for byte and launched through
+XcodeBuildMCP. The installed App access screen showed 25 launch files split
+11 user, 4 all-user and 10 system, with owning-app icons where available;
+Diagnose showed the saved-baseline control. Build 9 was preserved at
+`~/Applications/PerformanceDaddy backups/PerformanceDaddy-0.2.4-build9.app`.
+
 ## 2026-09-27 — local follow-up prepared for review
 
 Source changes add launch-file scope counts and app icons where a file points
