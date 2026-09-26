@@ -88,6 +88,10 @@ final class DiagnosisViewModel: ObservableObject {
                 if let previous {
                     comparison = engine.compare(before: previous, after: nextReport)
                 }
+                DaddyCompletionNotices.postIfWindowHidden(
+                    title: "Performance diagnosis complete",
+                    body: "Open PerformanceDaddy to review the report."
+                )
             } catch is CancellationError {
                 errorMessage = "The recording was cancelled. No changes were made."
                 report = previous
