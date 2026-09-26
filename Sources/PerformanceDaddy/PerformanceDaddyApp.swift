@@ -1,4 +1,5 @@
 import SwiftUI
+import ServiceManagement
 
 @main
 struct PerformanceDaddyApp: App {
@@ -46,16 +47,36 @@ enum PerformanceAppIcon {
 private struct LiveMenu: View {
     @ObservedObject var model: LiveViewModel
     @ObservedObject var updates: AppUpdates
+    @State private var launchAtLogin = SMAppService.mainApp.status == .enabled
+    @State private var loginError: String?
     var body: some View {
+        Text(model.paused ? "Monitoring paused" : "Monitoring while app is open")
         Text("RAM estimate: \(model.usedMemory)")
         Text("Pressure: \(model.snapshot?.pressure ?? "Measuring")")
         Text("\(model.portCount) open sockets · \(model.agentCount) agent processes")
         Divider()
         DaddyMenuOpenButton(appName: "PerformanceDaddy")
         Button(model.paused ? "Resume monitoring" : "Pause monitoring") { model.paused.toggle() }
+        Toggle("Launch at Login", isOn: Binding(
+            get: { launchAtLogin },
+            set: { setLaunchAtLogin($0) }
+        ))
+        if let loginError { Text(loginError) }
         Button("Check for Updates…") { updates.check() }
             .disabled(!updates.canCheck || !updates.isIdle)
         Divider()
         DaddyMenuQuitButton(appName: "PerformanceDaddy")
+    }
+
+    private func setLaunchAtLogin(_ enabled: Bool) {
+        do {
+            if enabled { try SMAppService.mainApp.register() }
+            else { try SMAppService.mainApp.unregister() }
+            launchAtLogin = SMAppService.mainApp.status == .enabled
+            loginError = nil
+        } catch {
+            launchAtLogin = SMAppService.mainApp.status == .enabled
+            loginError = "Couldn’t change login setting. Check System Settings → Login Items."
+        }
     }
 }
